@@ -2,83 +2,66 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useControlCenterStore, WorkoutSession, WorkoutSetItem } from "../../lib/storage/store";
+import { useControlCenterStore, WorkoutSetItem } from "../../lib/storage/store";
 import { TopHeader } from "../../components/TopHeader";
 import { VisionDock } from "../../components/VisionDock";
+import { LoginPage } from "../../components/LoginPage";
+import { REAL_EXERCISES_DATABASE, ExerciseItem } from "../../lib/exercises";
 import {
   calculateE1RM,
   calculateRelativeStrength,
-  PUBLISHED_BENCHMARKS,
 } from "../../lib/fitness-calc";
 
-const STANDARD_EXERCISES = [
-  { id: "bench_press", name: "Barbell Bench Press", defaultWeight: 100 },
-  { id: "squat", name: "Barbell Back Squat", defaultWeight: 140 },
-  { id: "deadlift", name: "Conventional Deadlift", defaultWeight: 180 },
-  { id: "overhead_press", name: "Standing Overhead Press", defaultWeight: 65 },
-  { id: "weighted_pullup", name: "Weighted Pull-up", defaultWeight: 20 },
-  { id: "barbell_row", name: "Barbell Bent-Over Row", defaultWeight: 80 },
-  { id: "barbell_curl", name: "Barbell Biceps Curl", defaultWeight: 40 },
-  { id: "tricep_pushdown", name: "Cable Tricep Pushdown", defaultWeight: 35 },
-  { id: "romanian_deadlift", name: "Romanian Deadlift (RDL)", defaultWeight: 120 },
-  { id: "hanging_leg_raise", name: "Hanging Leg Raise (Bodyweight)", defaultWeight: 0 },
-];
-
 export default function FitnessPage() {
-  const { profile, workouts, addWorkout } = useControlCenterStore();
+  const { currentUser, loginUser, logoutUser, profile, workouts, addWorkout } =
+    useControlCenterStore();
 
-  // Active workout state
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
-  const [workoutName, setWorkoutName] = useState("Upper Power Progression");
-  const [activeSets, setActiveSets] = useState<WorkoutSetItem[]>([
-    {
-      id: "set-1",
-      exerciseId: "bench_press",
-      exerciseName: "Barbell Bench Press",
-      setNumber: 1,
-      reps: 5,
-      weightKg: 100,
-      completed: true,
-    },
-    {
-      id: "set-2",
-      exerciseId: "bench_press",
-      exerciseName: "Barbell Bench Press",
-      setNumber: 2,
-      reps: 5,
-      weightKg: 105,
-      completed: true,
-    },
-    {
-      id: "set-3",
-      exerciseId: "weighted_pullup",
-      exerciseName: "Weighted Pull-up",
-      setNumber: 1,
-      reps: 6,
-      weightKg: 20,
-      completed: false,
-    },
-  ]);
+  const [workoutName, setWorkoutName] = useState("Hypertrophy Session");
+  const [activeSets, setActiveSets] = useState<WorkoutSetItem[]>([]);
 
-  // Selected exercise to add
-  const [selectedExerciseId, setSelectedExerciseId] = useState("bench_press");
-  const [inputWeight, setInputWeight] = useState("100");
+  // Exercise selection & search state
+  const [search, setSearch] = useState("");
+  const [muscleFilter, setMuscleFilter] = useState("all");
+  const [selectedExercise, setSelectedExercise] = useState<ExerciseItem>(
+    REAL_EXERCISES_DATABASE[0]
+  );
+  const [inputWeight, setInputWeight] = useState("80");
   const [inputReps, setInputReps] = useState("5");
 
-  // Calculator widget state
-  const [calcWeight, setCalcWeight] = useState(100);
+  // Calculator state
+  const [calcWeight, setCalcWeight] = useState(80);
   const [calcReps, setCalcReps] = useState(5);
   const calculatedE1rm = calculateE1RM(calcWeight, calcReps);
-  const calculatedRatio = calculateRelativeStrength(calculatedE1rm, profile.currentBodyweightKg);
+  const calculatedRatio = calculateRelativeStrength(
+    calculatedE1rm,
+    profile.currentBodyweightKg
+  );
+
+  if (!currentUser) {
+    return <LoginPage onLoginSuccess={loginUser} />;
+  }
+
+  const filteredExercises = REAL_EXERCISES_DATABASE.filter((ex) => {
+    if (muscleFilter !== "all" && ex.primaryMuscle !== muscleFilter) {
+      return false;
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      return (
+        ex.name.toLowerCase().includes(q) ||
+        ex.primaryMuscle.toLowerCase().includes(q) ||
+        ex.equipment.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
 
   const handleAddSetToActive = () => {
-    const ex = STANDARD_EXERCISES.find((e) => e.id === selectedExerciseId);
-    if (!ex) return;
-
     const newSet: WorkoutSetItem = {
       id: "set-" + Date.now(),
-      exerciseId: ex.id,
-      exerciseName: ex.name,
+      exerciseId: selectedExercise.id,
+      exerciseName: selectedExercise.name,
       setNumber: activeSets.length + 1,
       reps: parseInt(inputReps) || 5,
       weightKg: parseFloat(inputWeight) || 0,
@@ -100,24 +83,26 @@ export default function FitnessPage() {
       name: workoutName,
       startedAt: new Date().toISOString(),
       completedAt: new Date().toISOString(),
-      notes: "Logged via mobile control center fitness module.",
+      notes: "Logged via Control Center fitness engine.",
       totalVolumeKg: volume,
       sets: completedSets,
     });
 
+    setActiveSets([]);
     setIsWorkoutActive(false);
     alert(`Workout '${workoutName}' saved! Volume: ${volume.toLocaleString()} kg.`);
   };
 
   const handleCancelWorkout = () => {
     if (confirm("Discard this unfinished workout? Incomplete sets will not be saved.")) {
+      setActiveSets([]);
       setIsWorkoutActive(false);
     }
   };
 
   return (
     <>
-      <TopHeader profile={profile} />
+      <TopHeader profile={profile} onLogout={logoutUser} />
 
       <main className="flex-col relative w-full pt-16 pb-28 bg-[#000000]">
         <div className="flex flex-col w-full max-w-lg mx-auto text-white px-4 pt-3 pb-8 gap-5">
@@ -132,7 +117,7 @@ export default function FitnessPage() {
                 Dashboard
               </Link>
               <h1 className="text-2xl font-bold tracking-tight text-white">
-                Strength & Workout Engine
+                Strength &amp; Workout Engine
               </h1>
             </div>
             {!isWorkoutActive ? (
@@ -152,7 +137,7 @@ export default function FitnessPage() {
 
           {/* ACTIVE WORKOUT LOGGING PANEL */}
           {isWorkoutActive && (
-            <section className="apple-glass-panel p-4 flex flex-col gap-3.5 border-apple-blue/50">
+            <section className="apple-glass-panel p-4 flex flex-col gap-3.5 border-apple-blue/50 animate-in fade-in">
               <div className="flex items-center justify-between">
                 <input
                   type="text"
@@ -161,104 +146,179 @@ export default function FitnessPage() {
                   className="bg-transparent text-sm font-semibold text-white border-b border-white/20 pb-0.5 focus:outline-none focus:border-apple-blue w-2/3"
                 />
                 <span className="text-[11px] font-mono text-apple-green font-medium">
-                  {activeSets.filter((s) => s.completed).length} Done
+                  {activeSets.filter((s) => s.completed).length} Logged
                 </span>
               </div>
 
-              {/* Set logging items */}
-              <div className="flex flex-col gap-2">
-                {activeSets.map((s, idx) => {
-                  const setE1rm = calculateE1RM(s.weightKg, s.reps);
-                  const setRatio = calculateRelativeStrength(setE1rm, profile.currentBodyweightKg);
+              {/* Real Exercise Search & Select */}
+              <div className="flex flex-col gap-2 pt-1 border-t border-white/10">
+                <span className="text-[10px] font-mono uppercase text-apple-labelSecondary">
+                  Select From 60+ Real Exercises:
+                </span>
 
-                  return (
-                    <div
-                      key={s.id}
-                      className="apple-glass-card p-2.5 flex items-center justify-between gap-2"
+                <div className="apple-glass-card px-3 py-1.5 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-apple-labelTertiary">
+                    search
+                  </span>
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search exercise by name or muscle..."
+                    className="bg-transparent text-xs text-white outline-none w-full"
+                  />
+                  {search && (
+                    <button
+                      onClick={() => setSearch("")}
+                      className="text-apple-labelTertiary hover:text-white text-xs"
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <button
-                          onClick={() => {
-                            setActiveSets((prev) =>
-                              prev.map((item) =>
-                                item.id === s.id ? { ...item, completed: !item.completed } : item
-                              )
-                            );
-                          }}
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-xs apple-spring-press ${
-                            s.completed
-                              ? "bg-apple-green text-black font-bold"
-                              : "border border-white/30 text-transparent"
-                          }`}
-                        >
-                          ✓
-                        </button>
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* Muscle Filter Pills */}
+                <div className="flex items-center gap-1 overflow-x-auto pb-1 no-scrollbar text-[10px]">
+                  {[
+                    { id: "all", label: "All" },
+                    { id: "chest", label: "Chest" },
+                    { id: "back", label: "Back" },
+                    { id: "shoulders", label: "Shoulders" },
+                    { id: "biceps", label: "Biceps" },
+                    { id: "triceps", label: "Triceps" },
+                    { id: "quadriceps", label: "Legs" },
+                    { id: "core", label: "Core" },
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => setMuscleFilter(f.id)}
+                      className={`flex-shrink-0 px-2 py-0.5 rounded-full transition-all ${
+                        muscleFilter === f.id
+                          ? "bg-white/20 text-white font-semibold"
+                          : "text-apple-labelSecondary hover:text-white bg-white/5"
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Exercises Dropdown List */}
+                <div className="apple-glass-card max-h-32 overflow-y-auto flex flex-col divide-y divide-white/5">
+                  {filteredExercises.map((ex) => (
+                    <button
+                      key={ex.id}
+                      onClick={() => {
+                        setSelectedExercise(ex);
+                        setInputWeight(ex.defaultWeight.toString());
+                      }}
+                      className={`p-2 text-left flex items-center justify-between text-xs transition-colors ${
+                        selectedExercise.id === ex.id
+                          ? "bg-apple-blue/20 text-white font-semibold"
+                          : "hover:bg-white/5 text-apple-labelSecondary"
+                      }`}
+                    >
+                      <span className="truncate">{ex.name}</span>
+                      <span className="text-[10px] font-mono text-apple-labelTertiary uppercase flex-shrink-0">
+                        {ex.equipment}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Set logging input */}
+              <div className="apple-glass-card p-3 flex flex-col gap-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-white truncate max-w-[200px]">
+                    {selectedExercise.name}
+                  </span>
+                  <span className="text-[10px] text-apple-labelTertiary font-mono uppercase">
+                    {selectedExercise.primaryMuscle}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <label className="text-[9px] text-apple-labelSecondary uppercase block mb-0.5">
+                      Weight (kg)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      value={inputWeight}
+                      onChange={(e) => setInputWeight(e.target.value)}
+                      className="w-full bg-white/[0.08] border border-white/15 rounded-xl px-2.5 py-1.5 text-xs font-mono text-white text-center focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-[9px] text-apple-labelSecondary uppercase block mb-0.5">
+                      Reps
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="30"
+                      value={inputReps}
+                      onChange={(e) => setInputReps(e.target.value)}
+                      className="w-full bg-white/[0.08] border border-white/15 rounded-xl px-2.5 py-1.5 text-xs font-mono text-white text-center focus:outline-none"
+                    />
+                  </div>
+                  <button
+                    onClick={handleAddSetToActive}
+                    className="self-end px-3 py-1.5 rounded-xl bg-apple-blue text-white text-xs font-semibold apple-spring-press h-8"
+                  >
+                    + Log Set
+                  </button>
+                </div>
+              </div>
+
+              {/* Logged Sets in current session */}
+              {activeSets.length > 0 && (
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[10px] font-mono uppercase text-apple-labelTertiary">
+                    Logged Sets ({activeSets.length})
+                  </span>
+                  {activeSets.map((s, idx) => {
+                    const e1rm = calculateE1RM(s.weightKg, s.reps);
+                    const ratio = calculateRelativeStrength(
+                      e1rm,
+                      profile.currentBodyweightKg
+                    );
+                    return (
+                      <div
+                        key={s.id}
+                        className="apple-glass-card p-2 flex items-center justify-between text-xs font-mono"
+                      >
                         <div className="min-w-0">
-                          <p className="text-xs font-medium text-white truncate">
+                          <p className="text-white truncate">
                             {idx + 1}. {s.exerciseName}
                           </p>
-                          <span className="text-[10px] text-apple-labelSecondary font-mono">
-                            {s.weightKg} kg × {s.reps} reps • e1RM: {setE1rm} kg ({setRatio}x BW)
+                          <span className="text-[10px] text-apple-labelSecondary">
+                            {s.weightKg}kg × {s.reps} reps • e1RM: {e1rm}kg ({ratio}x BW)
                           </span>
                         </div>
+                        <button
+                          onClick={() =>
+                            setActiveSets((prev) => prev.filter((item) => item.id !== s.id))
+                          }
+                          className="text-apple-labelTertiary hover:text-apple-red p-1"
+                        >
+                          ✕
+                        </button>
                       </div>
-                      <button
-                        onClick={() => setActiveSets((prev) => prev.filter((item) => item.id !== s.id))}
-                        className="text-apple-labelTertiary hover:text-apple-red text-xs px-1"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Add New Set Row */}
-              <div className="flex gap-2 items-center pt-2 border-t border-white/10">
-                <select
-                  value={selectedExerciseId}
-                  onChange={(e) => {
-                    setSelectedExerciseId(e.target.value);
-                    const found = STANDARD_EXERCISES.find((ex) => ex.id === e.target.value);
-                    if (found) setInputWeight(found.defaultWeight.toString());
-                  }}
-                  className="flex-1 bg-white/[0.08] border border-white/15 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none"
-                >
-                  {STANDARD_EXERCISES.map((ex) => (
-                    <option key={ex.id} value={ex.id} className="bg-black">
-                      {ex.name}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  placeholder="kg"
-                  value={inputWeight}
-                  onChange={(e) => setInputWeight(e.target.value)}
-                  className="w-16 bg-white/[0.08] border border-white/15 rounded-xl px-2 py-1.5 text-xs font-mono text-white text-center focus:outline-none"
-                />
-                <input
-                  type="number"
-                  placeholder="reps"
-                  value={inputReps}
-                  onChange={(e) => setInputReps(e.target.value)}
-                  className="w-14 bg-white/[0.08] border border-white/15 rounded-xl px-2 py-1.5 text-xs font-mono text-white text-center focus:outline-none"
-                />
-                <button
-                  onClick={handleAddSetToActive}
-                  className="px-2.5 py-1.5 rounded-xl bg-apple-blue text-white text-xs font-semibold apple-spring-press"
-                >
-                  + Set
-                </button>
-              </div>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-2 pt-1">
+              <div className="flex items-center gap-2 pt-1 border-t border-white/10">
                 <button
                   onClick={handleFinishWorkout}
-                  className="flex-1 py-2 rounded-xl bg-apple-green text-black font-semibold text-xs apple-spring-press"
+                  disabled={activeSets.length === 0}
+                  className="flex-1 py-2 rounded-xl bg-apple-green text-black font-semibold text-xs apple-spring-press disabled:opacity-50"
                 >
-                  Finish & Save Workout
+                  Finish &amp; Save Workout
                 </button>
                 <button
                   onClick={handleCancelWorkout}
@@ -274,9 +334,11 @@ export default function FitnessPage() {
           <section className="apple-glass-panel p-4 flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-apple-labelSecondary">
-                Relative Strength e1RM Calculator
+                Scientific e1RM &amp; Relative Strength
               </span>
-              <span className="text-[10px] font-mono text-apple-labelTertiary">Epley Formula</span>
+              <span className="text-[10px] font-mono text-apple-labelTertiary">
+                Epley Standard
+              </span>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -308,20 +370,27 @@ export default function FitnessPage() {
 
             <div className="apple-glass-card p-3 flex items-center justify-between">
               <div>
-                <span className="text-[10px] text-apple-labelTertiary block uppercase">Estimated 1RM</span>
+                <span className="text-[10px] text-apple-labelTertiary block uppercase">
+                  Estimated 1RM
+                </span>
                 <span className="text-xl font-mono font-bold text-white">
-                  {calculatedE1rm} <span className="text-xs font-normal text-apple-labelSecondary">kg</span>
+                  {calculatedE1rm}{" "}
+                  <span className="text-xs font-normal text-apple-labelSecondary">kg</span>
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-[10px] text-apple-labelTertiary block uppercase">Relative to BW</span>
+                <span className="text-[10px] text-apple-labelTertiary block uppercase">
+                  Relative Ratio
+                </span>
                 <span className="text-xl font-mono font-bold text-apple-blue">
-                  {calculatedRatio}x <span className="text-xs font-normal text-apple-labelSecondary">BW</span>
+                  {calculatedRatio}x{" "}
+                  <span className="text-xs font-normal text-apple-labelSecondary">BW</span>
                 </span>
               </div>
             </div>
             <span className="text-[10px] text-apple-labelTertiary leading-relaxed">
-              * Based on user current bodyweight of {profile.currentBodyweightKg} kg. Formula: weight × (1 + reps / 30).
+              * Based on user current bodyweight of {profile.currentBodyweightKg} kg. Formula:
+              weight × (1 + reps / 30).
             </span>
           </section>
 
@@ -331,35 +400,47 @@ export default function FitnessPage() {
               Historical Workouts ({workouts.length})
             </span>
 
-            {workouts.map((w) => (
-              <div key={w.id} className="apple-glass-panel p-3.5 flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-semibold text-white">{w.name}</h3>
-                    <span className="text-[10px] font-mono text-apple-labelTertiary">
-                      {w.startedAt.slice(0, 10)} • Total Vol: {w.totalVolumeKg.toLocaleString()} kg
-                    </span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full bg-apple-green/15 text-apple-green text-[10px] font-mono font-semibold">
-                    {w.sets.length} Sets
-                  </span>
-                </div>
-
-                <div className="flex flex-col gap-1 mt-1 border-t border-white/10 pt-2">
-                  {w.sets.map((set, sIdx) => (
-                    <div
-                      key={set.id || sIdx}
-                      className="flex items-center justify-between text-xs text-apple-labelSecondary font-mono"
-                    >
-                      <span className="text-white truncate max-w-[200px]">{set.exerciseName}</span>
-                      <span>
-                        {set.weightKg}kg × {set.reps} reps
+            {workouts.length === 0 ? (
+              <div className="apple-glass-card p-6 text-center text-apple-labelTertiary text-xs flex flex-col items-center gap-1.5">
+                <span className="material-symbols-outlined text-[20px]">
+                  fitness_center
+                </span>
+                <span>No workouts logged yet. Click &quot;Start Workout&quot; to log your real sets.</span>
+              </div>
+            ) : (
+              workouts.map((w) => (
+                <div key={w.id} className="apple-glass-panel p-3.5 flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-semibold text-white">{w.name}</h3>
+                      <span className="text-[10px] font-mono text-apple-labelTertiary">
+                        {w.startedAt.slice(0, 10)} • Vol:{" "}
+                        {w.totalVolumeKg ? w.totalVolumeKg.toLocaleString() : 0} kg
                       </span>
                     </div>
-                  ))}
+                    <span className="px-2 py-0.5 rounded-full bg-apple-green/15 text-apple-green text-[10px] font-mono font-semibold">
+                      {w.sets.length} Sets
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-1 mt-1 border-t border-white/10 pt-2">
+                    {w.sets.map((set, sIdx) => (
+                      <div
+                        key={set.id || sIdx}
+                        className="flex items-center justify-between text-xs text-apple-labelSecondary font-mono"
+                      >
+                        <span className="text-white truncate max-w-[200px]">
+                          {set.exerciseName}
+                        </span>
+                        <span>
+                          {set.weightKg}kg × {set.reps} reps
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </section>
         </div>
       </main>

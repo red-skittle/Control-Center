@@ -28,14 +28,20 @@ export function ActivityHeatmap({
     "bg-[#0A84FF]", // 4 Peak Apple Blue
   ];
 
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+
   const codingStreak = calculateCodingStreak(
     codingProblems.map((cp) => cp.dateSolved),
-    "2026-10-21"
+    todayStr
   );
+
+  // Compute real workouts this week
+  const oneWeekAgoMs = today.getTime() - 7 * 24 * 60 * 60 * 1000;
+  const workoutsThisWeek = workouts.filter((w) => new Date(w.startedAt).getTime() >= oneWeekAgoMs).length;
 
   // Generate 84 days grid (12 weeks x 7 days)
   const totalDays = 84;
-  const today = new Date("2026-10-21T12:00:00Z");
 
   const cells = Array.from({ length: totalDays }).map((_, idx) => {
     // Days counting backwards: cell 83 is today (day -0), cell 0 is day -83
@@ -99,15 +105,15 @@ export function ActivityHeatmap({
           </span>
         </div>
         <div className="apple-glass-card p-2.5 text-center">
-          <span className="text-[11px] text-apple-labelTertiary block">Habits</span>
+          <span className="text-[11px] text-apple-labelTertiary block">Habit Logs</span>
           <span className="text-xs font-mono font-semibold text-apple-orange">
-            18 Days
+            {habitCompletions.length} Actions
           </span>
         </div>
         <div className="apple-glass-card p-2.5 text-center">
-          <span className="text-[11px] text-apple-labelTertiary block">Workout</span>
+          <span className="text-[11px] text-apple-labelTertiary block">Workouts</span>
           <span className="text-xs font-mono font-semibold text-apple-green">
-            4 d/wk
+            {workoutsThisWeek} this wk
           </span>
         </div>
       </div>
@@ -115,9 +121,9 @@ export function ActivityHeatmap({
       {/* 7x12 Heatmap Grid */}
       <div className="flex flex-col gap-1 overflow-x-auto pb-1">
         <div className="flex items-center justify-between text-[10px] font-mono text-apple-labelTertiary px-1">
-          <span>AUG</span>
-          <span>SEP</span>
-          <span>OCT (CURRENT)</span>
+          <span>84 DAYS AGO</span>
+          <span>CONSISTENCY TELEMETRY</span>
+          <span>TODAY</span>
         </div>
         <div className="grid grid-flow-col grid-rows-7 gap-1.5 w-max self-center my-1">
           {cells.map((cell, idx) => (
@@ -147,11 +153,15 @@ export function ActivityHeatmap({
       <div className="flex items-center justify-between pt-2 border-t border-white/10 text-[11px] text-apple-labelSecondary">
         <span>
           Max Streak:{" "}
-          <strong className="text-white font-semibold font-mono">64 Days</strong>
+          <strong className="text-white font-semibold font-mono">
+            {codingStreak.longestStreak} Days
+          </strong>
         </span>
         <span>
-          Active Disciplines:{" "}
-          <strong className="text-apple-blue font-semibold font-mono">4 / 4</strong>
+          Logged Sessions:{" "}
+          <strong className="text-apple-blue font-semibold font-mono">
+            {workouts.length} Workouts
+          </strong>
         </span>
       </div>
     </section>

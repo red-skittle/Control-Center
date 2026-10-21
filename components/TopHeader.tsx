@@ -7,12 +7,14 @@ interface TopHeaderProps {
   profile: UserProfile;
   onQuickAdd?: () => void;
   onOpenCommandMenu?: () => void;
+  onLogout?: () => void;
 }
 
 export function TopHeader({
   profile,
   onQuickAdd,
   onOpenCommandMenu,
+  onLogout,
 }: TopHeaderProps) {
   return (
     <header className="fixed top-0 w-full z-50 apple-glass-header pt-safe transition-all">
@@ -38,21 +40,36 @@ export function TopHeader({
           </div>
         </Link>
         <div className="flex items-center gap-1.5">
-          <button
-            aria-label="Command Menu"
-            className="h-8 px-2.5 rounded-full apple-glass-pill apple-spring-press text-apple-labelSecondary hover:text-white flex items-center gap-1.5 text-xs"
-            onClick={onOpenCommandMenu}
-          >
-            <span className="material-symbols-outlined text-[15px]">terminal</span>
-            <kbd className="text-[9px] font-mono text-apple-labelTertiary">⌘K</kbd>
-          </button>
-          <button
-            aria-label="Add Action"
-            className="w-8 h-8 rounded-full apple-glass-pill apple-spring-press text-apple-blue flex items-center justify-center"
-            onClick={onQuickAdd}
-          >
-            <span className="material-symbols-outlined text-[19px] font-medium">add</span>
-          </button>
+          {onOpenCommandMenu && (
+            <button
+              aria-label="Command Menu"
+              className="h-8 px-2.5 rounded-full apple-glass-pill apple-spring-press text-apple-labelSecondary hover:text-white flex items-center gap-1.5 text-xs"
+              onClick={onOpenCommandMenu}
+            >
+              <span className="material-symbols-outlined text-[15px]">terminal</span>
+              <kbd className="text-[9px] font-mono text-apple-labelTertiary">⌘K</kbd>
+            </button>
+          )}
+          {onQuickAdd && (
+            <button
+              aria-label="Add Action"
+              className="w-8 h-8 rounded-full apple-glass-pill apple-spring-press text-apple-blue flex items-center justify-center"
+              onClick={onQuickAdd}
+              title="Quick Log"
+            >
+              <span className="material-symbols-outlined text-[19px] font-medium">add</span>
+            </button>
+          )}
+          {onLogout && (
+            <button
+              aria-label="Sign Out"
+              className="w-8 h-8 rounded-full apple-glass-pill apple-spring-press text-apple-labelSecondary hover:text-apple-red flex items-center justify-center"
+              onClick={onLogout}
+              title="Sign Out"
+            >
+              <span className="material-symbols-outlined text-[17px]">logout</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

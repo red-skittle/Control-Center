@@ -87,6 +87,32 @@ export function PhysiqueRadar({
         ) / 10
       : 0;
 
+  // Real highest PR from logged workouts
+  const bestLoggedSet = workouts
+    .flatMap((w) => w.sets)
+    .filter((s) => s.completed && s.weightKg > 0)
+    .sort((a, b) => b.weightKg - a.weightKg)[0];
+
+  const validScores = Object.values(scores)
+    .map((s) => s.score)
+    .filter((s): s is number => s !== null);
+
+  const avgScore =
+    validScores.length > 0
+      ? Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length)
+      : 0;
+
+  const rankTier =
+    avgScore >= 85
+      ? "CLASS S"
+      : avgScore >= 70
+      ? "CLASS A"
+      : avgScore >= 50
+      ? "CLASS B"
+      : avgScore >= 25
+      ? "CLASS C"
+      : "CLASS D";
+
   return (
     <section className="apple-glass-panel p-4 flex flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -110,7 +136,7 @@ export function PhysiqueRadar({
             {comparePreviousMonth ? "Comparing Prev" : "Compare"}
           </button>
           <span className="px-2 py-0.5 rounded-full bg-white/10 text-[11px] font-mono text-white font-semibold border border-white/10">
-            CLASS A
+            {rankTier}
           </span>
         </div>
       </div>
@@ -275,8 +301,12 @@ export function PhysiqueRadar({
         </div>
         <div className="apple-glass-card p-2 text-center">
           <span className="text-[10px] text-apple-labelTertiary block">Recent PR</span>
-          <span className="text-xs font-mono font-semibold text-white">185 kg</span>
-          <span className="text-[9px] text-apple-labelTertiary block mt-0.5">Deadlift</span>
+          <span className="text-xs font-mono font-semibold text-white">
+            {bestLoggedSet ? `${bestLoggedSet.weightKg} kg` : "-- kg"}
+          </span>
+          <span className="text-[9px] text-apple-labelTertiary block mt-0.5 truncate max-w-[90px] mx-auto">
+            {bestLoggedSet ? bestLoggedSet.exerciseName : "No sets yet"}
+          </span>
         </div>
         <div className="apple-glass-card p-2 text-center">
           <span className="text-[10px] text-apple-labelTertiary block">Week Volume</span>
@@ -284,7 +314,7 @@ export function PhysiqueRadar({
             {(totalVolume / 1000).toFixed(2)} t
           </span>
           <span className="text-[9px] text-apple-blue block mt-0.5 font-medium">
-            100% Target
+            {totalVolume > 0 ? "Active Load" : "0% Target"}
           </span>
         </div>
       </div>
@@ -293,12 +323,12 @@ export function PhysiqueRadar({
 }
 
 function mapExerciseToPrimaryMuscle(exerciseId: string): MuscleGroup {
-  if (exerciseId.includes("bench") || exerciseId.includes("pushup")) return "chest";
-  if (exerciseId.includes("deadlift") || exerciseId.includes("row") || exerciseId.includes("pullup")) return "back";
-  if (exerciseId.includes("overhead") || exerciseId.includes("raise")) return "shoulders";
-  if (exerciseId.includes("curl")) return "biceps";
-  if (exerciseId.includes("tricep") || exerciseId.includes("crusher")) return "triceps";
-  if (exerciseId.includes("squat") || exerciseId.includes("leg_press")) return "quadriceps";
-  if (exerciseId.includes("romanian") || exerciseId.includes("thrust")) return "hamstrings_glutes";
+  if (exerciseId.includes("bench") || exerciseId.includes("pushup") || exerciseId.includes("chest") || exerciseId.includes("fly")) return "chest";
+  if (exerciseId.includes("deadlift") || exerciseId.includes("row") || exerciseId.includes("pullup") || exerciseId.includes("chinup") || exerciseId.includes("lat")) return "back";
+  if (exerciseId.includes("overhead") || exerciseId.includes("raise") || exerciseId.includes("press") && !exerciseId.includes("bench")) return "shoulders";
+  if (exerciseId.includes("curl") && !exerciseId.includes("leg")) return "biceps";
+  if (exerciseId.includes("tricep") || exerciseId.includes("crusher") || exerciseId.includes("dips_triceps")) return "triceps";
+  if (exerciseId.includes("squat") || exerciseId.includes("leg_press") || exerciseId.includes("extension")) return "quadriceps";
+  if (exerciseId.includes("romanian") || exerciseId.includes("thrust") || exerciseId.includes("leg_curl") || exerciseId.includes("ham")) return "hamstrings_glutes";
   return "core";
 }

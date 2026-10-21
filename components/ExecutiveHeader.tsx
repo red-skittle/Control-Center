@@ -11,16 +11,31 @@ export function ExecutiveHeader({ profile }: ExecutiveHeaderProps) {
   const progressPct = Math.min(100, (currentXpInLevel / 10000) * 100);
   const xpNeeded = 10000 - currentXpInLevel;
 
+  const now = new Date();
+  const dateFormatted = now.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
+
+  const hour = now.getHours();
+  const greeting =
+    hour < 12
+      ? "Good morning"
+      : hour < 17
+      ? "Good afternoon"
+      : "Good evening";
+
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-end justify-between pt-1">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wider text-apple-labelSecondary flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-apple-blue shadow-[0_0_6px_rgba(10,132,255,0.8)]"></span>
-            Thursday, Oct 24
+            {dateFormatted}
           </p>
           <h1 className="text-2xl font-semibold tracking-tight text-white mt-0.5">
-            Good morning, {profile.displayName}
+            {greeting}, {profile.displayName}
           </h1>
         </div>
         <div className="flex flex-col items-end">

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useControlCenterStore } from "../../lib/storage/store";
 import { TopHeader } from "../../components/TopHeader";
 import { VisionDock } from "../../components/VisionDock";
+import { LoginPage } from "../../components/LoginPage";
 import { calculatePomodoroRemaining } from "../../lib/fitness-calc";
 
 interface CompletedSessionLog {
@@ -15,27 +16,14 @@ interface CompletedSessionLog {
 }
 
 export default function FocusPage() {
-  const { profile, tasks } = useControlCenterStore();
+  const { currentUser, loginUser, logoutUser, profile, tasks } = useControlCenterStore();
 
   const [durationMinutes, setDurationMinutes] = useState(25);
   const [remainingSeconds, setRemainingSeconds] = useState(25 * 60);
   const [isRunning, setIsRunning] = useState(false);
-  const [subject, setSubject] = useState("Distributed Cache Replication Spec");
+  const [subject, setSubject] = useState("Deep Focus Block");
   const [associatedTaskId, setAssociatedTaskId] = useState<string>("");
-  const [completedSessions, setCompletedSessions] = useState<CompletedSessionLog[]>([
-    {
-      id: "cs-1",
-      subject: "Red-Black Tree Amortized Proof",
-      durationMinutes: 25,
-      completedAt: "09:30 AM",
-    },
-    {
-      id: "cs-2",
-      subject: "LC #295 Data Stream Heap Rebalance",
-      durationMinutes: 25,
-      completedAt: "08:30 AM",
-    },
-  ]);
+  const [completedSessions, setCompletedSessions] = useState<CompletedSessionLog[]>([]);
 
   const startTimestampRef = useRef<number | null>(null);
   const accumulatedPausedMsRef = useRef<number>(0);
@@ -121,9 +109,13 @@ export default function FocusPage() {
   const circumference = 440;
   const strokeOffset = circumference * (1 - progressFraction);
 
+  if (!currentUser) {
+    return <LoginPage onLoginSuccess={loginUser} />;
+  }
+
   return (
     <>
-      <TopHeader profile={profile} />
+      <TopHeader profile={profile} onLogout={logoutUser} />
 
       <main className="flex-col relative w-full pt-16 pb-28 bg-[#000000]">
         <div className="flex flex-col w-full max-w-lg mx-auto text-white px-4 pt-3 pb-8 gap-5">

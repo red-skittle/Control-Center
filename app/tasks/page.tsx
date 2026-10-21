@@ -5,9 +5,19 @@ import Link from "next/link";
 import { useControlCenterStore, TaskItem } from "../../lib/storage/store";
 import { TopHeader } from "../../components/TopHeader";
 import { VisionDock } from "../../components/VisionDock";
+import { LoginPage } from "../../components/LoginPage";
 
 export default function TasksPage() {
-  const { profile, tasks, toggleTask, addTask, deleteTask } = useControlCenterStore();
+  const {
+    currentUser,
+    loginUser,
+    logoutUser,
+    profile,
+    tasks,
+    toggleTask,
+    addTask,
+    deleteTask,
+  } = useControlCenterStore();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "completed">("all");
@@ -51,9 +61,13 @@ export default function TasksPage() {
     setShowAddForm(false);
   };
 
+  if (!currentUser) {
+    return <LoginPage onLoginSuccess={loginUser} />;
+  }
+
   return (
     <>
-      <TopHeader profile={profile} />
+      <TopHeader profile={profile} onLogout={logoutUser} />
 
       <main className="flex-col relative w-full pt-16 pb-28 bg-[#000000]">
         <div className="flex flex-col w-full max-w-lg mx-auto text-white px-4 pt-3 pb-8 gap-4">
