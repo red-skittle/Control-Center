@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    width: 100vw;
+    margin: 0;
+    padding: 0;
+    background-color: #000000;
+    color: #FFFFFF;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", -apple-system-subheadline, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    overscroll-behavior: none;
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Native Apple frosted glass materials */
+.apple-glass-header {
+  background: rgba(10, 10, 14, 0.72);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.12);
+}
+
+.apple-glass-panel {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(20, 20, 26, 0.65);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.18), 0 8px 32px -4px rgba(0, 0, 0, 0.5);
+  border-radius: 24px;
+}
+
+.apple-glass-card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.065) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(22, 22, 28, 0.55);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.14), 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+  border-radius: 20px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.apple-glass-card:active {
+  transform: scale(0.98);
+}
+
+.apple-glass-pill {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 0.5px solid rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 0.5px 0.5px rgba(255, 255, 255, 0.2);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.visionos-dock {
+  background: rgba(24, 24, 30, 0.72);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border: 0.5px solid rgba(255, 255, 255, 0.20);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.22);
+}
+
+.apple-spring-press {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+}
+.apple-spring-press:active {
+  transform: scale(0.96);
+}
+
+/* Glow pulse for active elements */
+@keyframes appleRingGlow {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(10, 132, 255, 0.45)); }
+  50% { filter: drop-shadow(0 0 12px rgba(10, 132, 255, 0.75)); }
+}
+.pomo-ring-active {
+  animation: appleRingGlow 3s ease-in-out infinite;
+}
