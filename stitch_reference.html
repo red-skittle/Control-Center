@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<meta content="mobile_tab" name="shell-type"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            apple: {
+              bg: "#000000",
+              secondaryBg: "#0B0B0E",
+              blue: "#0A84FF",
+              green: "#30D158",
+              indigo: "#5E5CE6",
+              purple: "#BF5AF2",
+              orange: "#FF9F0A",
+              yellow: "#FFD60A",
+              red: "#FF453A",
+              labelPrimary: "#FFFFFF",
+              labelSecondary: "rgba(235, 235, 245, 0.60)",
+              labelTertiary: "rgba(235, 235, 245, 0.38)",
+              labelQuaternary: "rgba(235, 235, 245, 0.18)"
+            }
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'SFMono-Regular', 'Menlo', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    @layer base {
+      html, body {
+        width: 100vw;
+        margin: 0;
+        padding: 0;
+        background-color: #000000;
+        color: #FFFFFF;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", -apple-system-subheadline, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      body {
+        overscroll-behavior: none;
+      }
+      .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom, 20px);
+      }
+      .pt-safe {
+        padding-top: env(safe-area-inset-top, 0px);
+      }
+      main > :first-child { margin-top: 0 !important; }
+      main > :last-child { margin-bottom: 0 !important; }
+    }
+    ::-webkit-scrollbar { display: none; }
+    
+    /* Native Apple frosted glass materials */
+    .apple-glass-header {
+      background: rgba(10, 10, 14, 0.72);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      border-bottom: 0.5px solid rgba(255, 255, 255, 0.12);
+    }
+    
+    .apple-glass-panel {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(20, 20, 26, 0.65);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.18), 0 8px 32px -4px rgba(0, 0, 0, 0.5);
+      border-radius: 24px;
+    }
+
+    .apple-glass-card {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.065) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(22, 22, 28, 0.55);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.14), 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+      border-radius: 20px;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .apple-glass-card:active {
+      transform: scale(0.98);
+    }
+
+    .apple-glass-pill {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 0.5px solid rgba(255, 255, 255, 0.15);
+      box-shadow: inset 0 0.5px 0.5px rgba(255, 255, 255, 0.2);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .visionos-dock {
+      background: rgba(24, 24, 30, 0.72);
+      backdrop-filter: blur(32px) saturate(200%);
+      -webkit-backdrop-filter: blur(32px) saturate(200%);
+      border: 0.5px solid rgba(255, 255, 255, 0.20);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.22);
+    }
+
+    .apple-spring-press {
+      transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+    }
+    .apple-spring-press:active {
+      transform: scale(0.96);
+    }
+
+    /* Glow pulse for active elements */
+    @keyframes appleRingGlow {
+      0%, 100% { filter: drop-shadow(0 0 4px rgba(10, 132, 255, 0.45)); }
+      50% { filter: drop-shadow(0 0 12px rgba(10, 132, 255, 0.75)); }
+    }
+    .pomo-ring-active {
+      animation: appleRingGlow 3s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="bg-black text-white min-h-screen flex flex-col selection:bg-apple-blue selection:text-white antialiased">
+<!-- Authentic Apple Frosted Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 apple-glass-header pt-safe transition-all">
+<div class="h-14 px-4 flex items-center justify-between max-w-lg mx-auto">
+<div class="flex items-center gap-3">
+<!-- Apple Squircle Avatar -->
+<div class="w-8 h-8 rounded-[10px] bg-gradient-to-b from-white/20 to-white/5 border border-white/20 flex items-center justify-center text-white shadow-sm font-semibold text-[13px] tracking-tight">
+        AL
+      </div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 leading-none">
+<span class="text-[13px] font-semibold text-white tracking-tight">Alex</span>
+<span class="w-1.5 h-1.5 rounded-full bg-apple-green shadow-[0_0_6px_rgba(48,209,88,0.8)]"></span>
+<span class="text-[11px] font-mono font-medium text-apple-green tracking-tight">94.2%</span>
+</div>
+<span class="text-[10px] font-medium tracking-wider uppercase text-apple-labelTertiary mt-0.5">Tier II • Discipline Architect</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5">
+<button aria-label="Command Menu" class="h-8 px-2.5 rounded-full apple-glass-pill apple-spring-press text-apple-labelSecondary hover:text-white flex items-center gap-1.5 text-xs" onclick="triggerQuickAction('task')">
+<span class="material-symbols-outlined text-[15px]">terminal</span>
+<kbd class="text-[9px] font-mono text-apple-labelTertiary">⌘K</kbd>
+</button>
+<button aria-label="Add Action" class="w-8 h-8 rounded-full apple-glass-pill apple-spring-press text-apple-blue flex items-center justify-center" onclick="triggerQuickAction('task')">
+<span class="material-symbols-outlined text-[19px] font-medium">add</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Container -->
+<main class="flex-col relative w-full pt-14 pb-28 bg-[#000000]">
+<div class="flex flex-col w-full max-w-lg mx-auto text-white px-4 pt-3 pb-8 gap-5">
+<!-- Executive Header & XP Telemetry -->
+<section class="flex flex-col gap-3">
+<div class="flex items-end justify-between pt-1">
+<div>
+<p class="text-[11px] font-semibold uppercase tracking-wider text-apple-labelSecondary flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-apple-blue shadow-[0_0_6px_rgba(10,132,255,0.8)]"></span>
+            Thursday, Oct 24
+          </p>
+<h1 class="text-2xl font-semibold tracking-tight text-white mt-0.5">
+            Good morning, Alex
+          </h1>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[10px] font-semibold tracking-wider uppercase text-apple-labelTertiary">Synchrony</span>
+<span class="text-xs font-mono font-semibold text-apple-blue flex items-center gap-0.5 bg-apple-blue/10 px-2 py-0.5 rounded-full border border-apple-blue/20 mt-0.5">
+<span class="material-symbols-outlined text-[13px]">bolt</span>
+            1.45x
+          </span>
+</div>
+</div>
+<!-- Level & XP Capsule (Apple Native Bar) -->
+<div class="apple-glass-panel p-4 flex flex-col gap-2.5">
+<div class="flex items-center justify-between text-xs">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded-full bg-white/10 text-[11px] font-mono font-semibold text-white border border-white/10">LVL 24</span>
+<span class="text-[13px] font-medium text-apple-labelSecondary">Discipline Architect</span>
+</div>
+<div class="text-[11px] font-mono text-apple-labelSecondary">
+<span class="text-white font-semibold" id="xp-text">8,450</span> <span class="text-apple-labelTertiary">/ 10,000 XP</span>
+</div>
+</div>
+<!-- Progress Bar Track -->
+<div class="w-full h-2 rounded-full bg-white/10 overflow-hidden relative p-[1px]">
+<div class="h-full bg-gradient-to-r from-apple-blue via-apple-indigo to-apple-purple rounded-full transition-all duration-700 ease-out shadow-[0_0_8px_rgba(10,132,255,0.5)]" style="width: 84.5%;"></div>
+</div>
+<div class="flex items-center justify-between text-[11px] text-apple-labelTertiary">
+<span>Tier II Special Operative</span>
+<span class="text-apple-blue font-semibold font-mono text-[10px]">+350 XP to LVL 25</span>
+</div>
+</div>
+</section>
+<!-- KPI METRIC MATRIX (Clean 2-Column Native Grid) -->
+<section class="grid grid-cols-2 gap-2.5">
+<!-- Card 1: Completion -->
+<div class="apple-glass-card p-3.5 flex flex-col justify-between">
+<div class="flex items-center justify-between text-[11px] font-semibold text-apple-labelSecondary uppercase tracking-wider">
+<span>Completion</span>
+<span class="material-symbols-outlined text-[17px] text-apple-blue">donut_large</span>
+</div>
+<div class="my-2 flex items-baseline gap-1.5">
+<span class="text-2xl font-semibold tracking-tight text-white" id="kpi-completion-rate">50%</span>
+<span class="text-[11px] font-mono text-apple-green font-semibold flex items-center bg-apple-green/10 px-1.5 py-0.2 rounded">
+            ↑ 12%
+          </span>
+</div>
+<span class="text-[11px] text-apple-labelTertiary">Ahead of 7d trajectory</span>
+</div>
+<!-- Card 2: Tasks Done -->
+<div class="apple-glass-card p-3.5 flex flex-col justify-between">
+<div class="flex items-center justify-between text-[11px] font-semibold text-apple-labelSecondary uppercase tracking-wider">
+<span>Task Velocity</span>
+<span class="material-symbols-outlined text-[17px] text-apple-green">check_circle</span>
+</div>
+<div class="my-2 flex items-baseline gap-1.5">
+<span class="text-2xl font-semibold tracking-tight text-white" id="kpi-task-counter">3/6</span>
+<span class="text-[11px] text-apple-labelSecondary">Done</span>
+</div>
+<span class="text-[11px] text-apple-labelTertiary">3 pending today</span>
+</div>
+<!-- Card 3: Deep Focus -->
+<div class="apple-glass-card p-3.5 flex flex-col justify-between">
+<div class="flex items-center justify-between text-[11px] font-semibold text-apple-labelSecondary uppercase tracking-wider">
+<span>Deep Focus</span>
+<span class="material-symbols-outlined text-[17px] text-apple-blue">timelapse</span>
+</div>
+<div class="my-2 flex items-baseline gap-1">
+<span class="text-2xl font-semibold tracking-tight text-white">2<span class="text-sm font-normal text-apple-labelSecondary">h</span> 45<span class="text-sm font-normal text-apple-labelSecondary">m</span></span>
+</div>
+<div class="w-full bg-white/10 h-1.5 rounded-full overflow-hidden mt-0.5">
+<div class="bg-apple-blue h-full rounded-full shadow-[0_0_6px_rgba(10,132,255,0.7)]" style="width: 68%;"></div>
+</div>
+</div>
+<!-- Card 4: Habit Streak -->
+<div class="apple-glass-card p-3.5 flex flex-col justify-between">
+<div class="flex items-center justify-between text-[11px] font-semibold text-apple-labelSecondary uppercase tracking-wider">
+<span>Habit Chain</span>
+<span class="material-symbols-outlined text-[17px] text-apple-orange">local_fire_department</span>
+</div>
+<div class="my-2 flex items-baseline gap-1.5">
+<span class="text-2xl font-semibold tracking-tight text-white">18</span>
+<span class="text-xs font-semibold text-apple-orange">Days</span>
+</div>
+<span class="text-[11px] text-apple-labelTertiary">Personal Best: 26d</span>
+</div>
+<!-- Card 5: Strength Routine -->
+<div class="apple-glass-card p-3.5 flex flex-col justify-between">
+<div class="flex items-center justify-between text-[11px] font-semibold text-apple-labelSecondary uppercase tracking-wider">
+<span>Strength</span>
+<span class="material-symbols-outlined text-[17px] text-apple-labelSecondary">fitness_center</span>
+</div>
+<div class="my-1.5">
+<span class="text-sm font-semibold text-white block leading-snug">Upper Pull A</span>
+<span class="text-[11px] text-apple-green flex items-center gap-1 font-medium mt-0.5">
+<span class="material-symbols-outlined text-[12px]">check</span> Logged 07:15 AM
+          </span>
+</div>
+<span class="text-[10px] font-mono text-apple-labelTertiary">Vol: 14,250 kg</span>
+</div>
+<!-- Card 6: Algo Velocity -->
+<div class="apple-glass-card p-3.5 flex flex-col justify-between">
+<div class="flex items-center justify-between text-[11px] font-semibold text-apple-labelSecondary uppercase tracking-wider">
+<span>Algo Cadence</span>
+<span class="material-symbols-outlined text-[17px] text-apple-purple">terminal</span>
+</div>
+<div class="my-1.5">
+<span class="text-2xl font-semibold tracking-tight text-white">3 <span class="text-xs font-normal text-apple-labelSecondary">Solved</span></span>
+</div>
+<span class="text-[10px] font-mono text-apple-labelTertiary truncate">2 LC Med • 1 CF 1600</span>
+</div>
+</section>
+<!-- COMMAND LAUNCHPAD (VisionOS Glass Ribbon) -->
+<section class="flex flex-col gap-2">
+<div class="flex items-center justify-between px-0.5">
+<span class="text-[11px] font-semibold uppercase tracking-wider text-apple-labelSecondary">Quick Launchpad</span>
+<span class="text-[10px] font-mono text-apple-labelTertiary">⌘ + 1..5</span>
+</div>
+<div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar -mx-4 px-4">
+<button class="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full apple-glass-pill apple-spring-press text-white text-xs font-medium" onclick="triggerQuickAction('pomodoro')">
+<span class="material-symbols-outlined text-[15px] text-apple-blue">timer</span>
+<span>Focus</span>
+</button>
+<button class="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full apple-glass-pill apple-spring-press text-white text-xs font-medium" onclick="triggerQuickAction('task')">
+<span class="material-symbols-outlined text-[15px] text-apple-green">add_task</span>
+<span>Task</span>
+</button>
+<button class="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full apple-glass-pill apple-spring-press text-white text-xs font-medium" onclick="triggerQuickAction('workout')">
+<span class="material-symbols-outlined text-[15px] text-apple-orange">exercise</span>
+<span>Workout</span>
+</button>
+<button class="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full apple-glass-pill apple-spring-press text-white text-xs font-medium" onclick="triggerQuickAction('code')">
+<span class="material-symbols-outlined text-[15px] text-apple-purple">code</span>
+<span>Solve LC</span>
+</button>
+<button class="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full apple-glass-pill apple-spring-press text-white text-xs font-medium" onclick="triggerQuickAction('note')">
+<span class="material-symbols-outlined text-[15px] text-apple-labelSecondary">edit_note</span>
+<span>Daily Note</span>
+</button>
+</div>
+</section>
+<!-- NEURAL FOCUS ENGINE (Apple Watch / VisionOS Native HUD) -->
+<section class="apple-glass-panel p-4 flex flex-col gap-3 relative overflow-hidden">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-apple-blue shadow-[0_0_8px_rgba(10,132,255,0.9)]"></span>
+<span class="text-[11px] font-semibold uppercase tracking-wider text-apple-labelSecondary">Neural Focus Engine</span>
+</div>
+<!-- Mode Tabs Segmented Control -->
+<div class="flex bg-white/[0.08] p-0.5 rounded-full text-xs font-medium border border-white/10">
+<button class="px-2.5 py-0.5 rounded-full bg-white/20 text-white shadow-sm transition-all" id="pomo-mode-focus" onclick="setPomoMode('focus')">25m</button>
+<button class="px-2.5 py-0.5 rounded-full text-apple-labelSecondary hover:text-white transition-all" id="pomo-mode-short" onclick="setPomoMode('short')">5m</button>
+<button class="px-2.5 py-0.5 rounded-full text-apple-labelSecondary hover:text-white transition-all" id="pomo-mode-long" onclick="setPomoMode('long')">15m</button>
+</div>
+</div>
+<!-- Radial Apple Watch Ring + Info -->
+<div class="flex items-center gap-4 py-1">
+<!-- Minimalist Apple Watch Ring -->
+<div class="relative w-24 h-24 flex items-center justify-center flex-shrink-0">
+<svg class="w-full h-full -rotate-90 pomo-ring-active" viewbox="0 0 100 100">
+<circle class="text-white/10 fill-none" cx="50" cy="50" r="42" stroke="currentColor" stroke-width="5.5"></circle>
+<circle class="fill-none transition-all duration-300" cx="50" cy="50" id="pomo-svg-progress" r="42" stroke="#0A84FF" stroke-dasharray="264" stroke-dashoffset="36" stroke-linecap="round" stroke-width="5.5"></circle>
+</svg>
+<div class="absolute flex flex-col items-center justify-center">
+<span class="font-mono text-[17px] font-bold text-white tracking-tight" id="pomo-timer-display">21:33</span>
+<span class="text-[9px] font-semibold uppercase tracking-wider text-apple-blue" id="pomo-status-tag">ACTIVE</span>
+</div>
+</div>
+<!-- Current Subject & Controls -->
+<div class="flex flex-col justify-center flex-1 min-w-0">
+<span class="text-[10px] font-semibold tracking-wider uppercase text-apple-labelTertiary">Current Focus Subject</span>
+<h2 class="text-sm font-semibold text-white truncate mt-0.5">
+            Red-Black Tree in C++
+          </h2>
+<p class="text-xs text-apple-labelSecondary truncate mt-0.5">
+            Module 4: Rebalancing rotations &amp; amortized proof
+          </p>
+<div class="flex items-center gap-2 mt-3">
+<button class="px-3.5 py-1.5 rounded-full bg-apple-blue text-white text-xs font-semibold flex items-center gap-1.5 apple-spring-press shadow-[0_2px_12px_rgba(10,132,255,0.4)]" id="pomo-play-btn" onclick="togglePomodoroTimer()">
+<span class="material-symbols-outlined text-[15px]" id="pomo-icon">pause</span>
+<span id="pomo-btn-text">Pause</span>
+</button>
+<button aria-label="Reset Timer" class="w-7 h-7 rounded-full apple-glass-pill apple-spring-press text-apple-labelSecondary hover:text-white flex items-center justify-center" onclick="resetPomodoroTimer()">
+<span class="material-symbols-outlined text-[15px]">restart_alt</span>
+</button>
+<button aria-label="Skip Session" class="w-7 h-7 rounded-full apple-glass-pill apple-spring-press text-apple-labelSecondary hover:text-white flex items-center justify-center" onclick="skipPomodoroSession()">
+<span class="material-symbols-outlined text-[15px]">skip_next</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- EXECUTION ENGINE (Apple Reminders Native Style) -->
+<section class="flex flex-col gap-2.5">
+<div class="flex items-center justify-between px-0.5">
+<div class="flex items-center gap-2">
+<span class="text-[11px] font-semibold uppercase tracking-wider text-apple-labelSecondary">Execution Engine</span>
+<span class="px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-mono text-apple-labelSecondary" id="task-badge-total">6</span>
+</div>
+<!-- Filter Tabs -->
+<div class="flex bg-white/[0.08] p-0.5 rounded-full text-xs border border-white/10">
+<button class="px-2.5 py-0.5 rounded-full bg-white/20 text-white font-medium transition-all" id="filter-all" onclick="filterTasks('all')">All</button>
+<button class="px-2.5 py-0.5 rounded-full text-apple-labelSecondary hover:text-white transition-all" id="filter-pending" onclick="filterTasks('pending')">Pending</button>
+<button class="px-2.5 py-0.5 rounded-full text-apple-labelSecondary hover:text-white transition-all" id="filter-completed" onclick="filterTasks('completed')">Done</button>
+</div>
+</div>
+<!-- Quick Add Field -->
+<div class="apple-glass-card px-3.5 py-2.5 flex items-center gap-2.5 focus-within:border-apple-blue/70 transition-colors">
+<span class="material-symbols-outlined text-[18px] text-apple-labelTertiary">add</span>
+<input class="bg-transparent text-sm text-white placeholder-apple-labelTertiary outline-none w-full min-w-0 font-normal" id="quick-task-input" onkeydown="handleTaskInputKey(event)" placeholder="Add actionable micro-objective..." type="text"/>
+<kbd class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-apple-labelSecondary border border-white/10">↵</kbd>
+</div>
+<!-- Task List Items -->
+<div class="flex flex-col gap-2 mt-0.5" id="task-list-container">
+<!-- Item 1: Done -->
+<div class="task-card apple-glass-card p-3 flex items-center justify-between gap-3" data-status="completed">
+<div class="flex items-center gap-3 min-w-0 flex-1">
+<button class="w-5 h-5 rounded-full bg-apple-green flex items-center justify-center flex-shrink-0 text-black shadow-sm transition-all apple-spring-press" onclick="toggleTaskStatus(this)">
+<span class="material-symbols-outlined text-[13px] font-bold">check</span>
+</button>
+<div class="min-w-0 flex-1">
+<p class="text-[13px] text-apple-labelSecondary line-through truncate task-title">Complete Upper Hypertrophy Workout (Day 4)</p>
+<div class="flex items-center gap-2 mt-0.5 text-[10px]">
+<span class="px-1.5 py-0.2 rounded bg-apple-green/15 text-apple-green font-medium">FITNESS</span>
+<span class="font-mono text-apple-labelTertiary">07:00 AM</span>
+<span class="font-mono text-apple-labelTertiary">+150 XP</span>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-apple-green flex-shrink-0">check_circle</span>
+</div>
+<!-- Item 2: Done -->
+<div class="task-card apple-glass-card p-3 flex items-center justify-between gap-3" data-status="completed">
+<div class="flex items-center gap-3 min-w-0 flex-1">
+<button class="w-5 h-5 rounded-full bg-apple-green flex items-center justify-center flex-shrink-0 text-black shadow-sm transition-all apple-spring-press" onclick="toggleTaskStatus(this)">
+<span class="material-symbols-outlined text-[13px] font-bold">check</span>
+</button>
+<div class="min-w-0 flex-1">
+<p class="text-[13px] text-apple-labelSecondary line-through truncate task-title">Solve LC #295: Find Median from Data Stream</p>
+<div class="flex items-center gap-2 mt-0.5 text-[10px]">
+<span class="px-1.5 py-0.2 rounded bg-apple-purple/15 text-apple-purple font-medium">ALGO</span>
+<span class="font-mono text-apple-labelTertiary">08:30 AM</span>
+<span class="font-mono text-apple-labelTertiary">+120 XP</span>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-apple-green flex-shrink-0">check_circle</span>
+</div>
+<!-- Item 3: Done -->
+<div class="task-card apple-glass-card p-3 flex items-center justify-between gap-3" data-status="completed">
+<div class="flex items-center gap-3 min-w-0 flex-1">
+<button class="w-5 h-5 rounded-full bg-apple-green flex items-center justify-center flex-shrink-0 text-black shadow-sm transition-all apple-spring-press" onclick="toggleTaskStatus(this)">
+<span class="material-symbols-outlined text-[13px] font-bold">check</span>
+</button>
+<div class="min-w-0 flex-1">
+<p class="text-[13px] text-apple-labelSecondary line-through truncate task-title">Hydration protocol: 2,500 mL water intake</p>
+<div class="flex items-center gap-2 mt-0.5 text-[10px]">
+<span class="px-1.5 py-0.2 rounded bg-apple-blue/15 text-apple-blue font-medium">HABIT</span>
+<span class="text-apple-labelTertiary">Daily</span>
+<span class="font-mono text-apple-labelTertiary">+50 XP</span>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-apple-green flex-shrink-0">check_circle</span>
+</div>
+<!-- Item 4: Pending -->
+<div class="task-card apple-glass-card p-3 flex items-center justify-between gap-3" data-status="pending">
+<div class="flex items-center gap-3 min-w-0 flex-1">
+<button class="w-5 h-5 rounded-full border border-white/30 hover:border-apple-blue flex items-center justify-center flex-shrink-0 transition-colors apple-spring-press" onclick="toggleTaskStatus(this)">
+<span class="material-symbols-outlined text-[13px] text-transparent hover:text-apple-blue">check</span>
+</button>
+<div class="min-w-0 flex-1">
+<p class="text-[13px] text-white font-normal truncate task-title">Distributed Cache Architecture Spec Doc</p>
+<div class="flex items-center gap-2 mt-0.5 text-[10px]">
+<span class="px-1.5 py-0.2 rounded bg-apple-red/15 text-apple-red font-medium">HIGH PRIORITY</span>
+<span class="font-mono text-apple-labelTertiary">10:00 AM</span>
+<span class="text-apple-labelTertiary">2 subtasks</span>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-white/20 flex-shrink-0">circle</span>
+</div>
+<!-- Item 5: Pending -->
+<div class="task-card apple-glass-card p-3 flex items-center justify-between gap-3" data-status="pending">
+<div class="flex items-center gap-3 min-w-0 flex-1">
+<button class="w-5 h-5 rounded-full border border-white/30 hover:border-apple-blue flex items-center justify-center flex-shrink-0 transition-colors apple-spring-press" onclick="toggleTaskStatus(this)">
+<span class="material-symbols-outlined text-[13px] text-transparent hover:text-apple-blue">check</span>
+</button>
+<div class="min-w-0 flex-1">
+<p class="text-[13px] text-white font-normal truncate task-title">Codeforces Round #940 Div. 2 Virtual Sim</p>
+<div class="flex items-center gap-2 mt-0.5 text-[10px]">
+<span class="px-1.5 py-0.2 rounded bg-apple-orange/15 text-apple-orange font-medium">COMPETITIVE</span>
+<span class="font-mono text-apple-labelTertiary">06:00 PM</span>
+<span class="font-mono text-apple-labelTertiary">+200 XP</span>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-white/20 flex-shrink-0">circle</span>
+</div>
+<!-- Item 6: Pending -->
+<div class="task-card apple-glass-card p-3 flex items-center justify-between gap-3" data-status="pending">
+<div class="flex items-center gap-3 min-w-0 flex-1">
+<button class="w-5 h-5 rounded-full border border-white/30 hover:border-apple-blue flex items-center justify-center flex-shrink-0 transition-colors apple-spring-press" onclick="toggleTaskStatus(this)">
+<span class="material-symbols-outlined text-[13px] text-transparent hover:text-apple-blue">check</span>
+</button>
+<div class="min-w-0 flex-1">
+<p class="text-[13px] text-white font-normal truncate task-title">Read 30 pgs: "Designing Data-Intensive Apps"</p>
+<div class="flex items-center gap-2 mt-0.5 text-[10px]">
+<span class="px-1.5 py-0.2 rounded bg-apple-blue/15 text-apple-blue font-medium">HABIT</span>
+<span class="font-mono text-apple-labelTertiary">09:00 PM</span>
+<span class="font-mono text-apple-labelTertiary">+75 XP</span>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-white/20 flex-shrink-0">circle</span>
+</div>
+</div>
+</section>
+<!-- 84-DAY ACTIVITY HEATMAP (Apple Blue Spectrum) -->
+<section class="apple-glass-panel p-4 flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-[11px] font-semibold uppercase tracking-wider text-apple-labelSecondary">Consistency Telemetry</span>
+<span class="text-sm font-semibold text-white">84-Day Activity Heatmap</span>
+</div>
+<div class="flex items-center gap-1 font-mono text-xs text-apple-blue font-semibold bg-apple-blue/10 px-2 py-0.5 rounded-full border border-apple-blue/20">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+<span>94% Ratio</span>
+</div>
+</div>
+<!-- Streak Summary Counters -->
+<div class="grid grid-cols-3 gap-2 py-0.5">
+<div class="apple-glass-card p-2.5 text-center">
+<span class="text-[11px] text-apple-labelTertiary block">Code Streak</span>
+<span class="text-xs font-mono font-semibold text-white">42 Days</span>
+</div>
+<div class="apple-glass-card p-2.5 text-center">
+<span class="text-[11px] text-apple-labelTertiary block">Habits</span>
+<span class="text-xs font-mono font-semibold text-apple-orange">18 Days</span>
+</div>
+<div class="apple-glass-card p-2.5 text-center">
+<span class="text-[11px] text-apple-labelTertiary block">Workout</span>
+<span class="text-xs font-mono font-semibold text-apple-green">4 d/wk</span>
+</div>
+</div>
+<!-- 7x12 Heatmap Grid -->
+<div class="flex flex-col gap-1 overflow-x-auto pb-1">
+<div class="flex items-center justify-between text-[10px] font-mono text-apple-labelTertiary px-1">
+<span>AUG</span>
+<span>SEP</span>
+<span>OCT (CURRENT)</span>
+</div>
+<div class="grid grid-flow-col grid-rows-7 gap-1.5 w-max self-center my-1" id="heatmap-grid">
+<!-- Dynamically populated via JS with Apple palette -->
+</div>
+<div class="flex items-center justify-between text-[11px] text-apple-labelSecondary pt-1 px-1">
+<span id="heatmap-selected-info">Select a node to inspect logs</span>
+<div class="flex items-center gap-1.5 text-[10px]">
+<span class="text-apple-labelTertiary">Less</span>
+<span class="w-2.5 h-2.5 rounded-sm bg-white/10"></span>
+<span class="w-2.5 h-2.5 rounded-sm bg-[#004080]"></span>
+<span class="w-2.5 h-2.5 rounded-sm bg-[#0066CC]"></span>
+<span class="w-2.5 h-2.5 rounded-sm bg-[#0A84FF]"></span>
+<span class="text-apple-labelTertiary">More</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-white/10 text-[11px] text-apple-labelSecondary">
+<span>Max Streak: <strong class="text-white font-semibold font-mono">64 Days</strong></span>
+<span>Active Disciplines: <strong class="text-apple-blue font-semibold font-mono">4 / 4</strong></span>
+</div>
+</section>
+<!-- PHYSIQUE RPG RADAR CHART (Apple Translucent Polygon) -->
+<section class="apple-glass-panel p-4 flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-[11px] font-semibold uppercase tracking-wider text-apple-labelSecondary">Physique RPG Matrix</span>
+<span class="text-sm font-semibold text-white">8-Axis Musculoskeletal Index</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-white/10 text-[11px] font-mono text-white font-semibold border border-white/10">
+          CLASS A
+        </span>
+</div>
+<!-- 8-Axis SVG Radar Polygon with Apple Blue Gradient -->
+<div class="relative w-full max-w-[270px] mx-auto my-1 aspect-square flex items-center justify-center">
+<svg class="w-full h-full overflow-visible" viewbox="0 0 300 300">
+<defs>
+<radialgradient cx="50%" cy="50%" id="appleRadarGlow" r="50%">
+<stop offset="0%" stop-color="#0A84FF" stop-opacity="0.38"></stop>
+<stop offset="100%" stop-color="#0A84FF" stop-opacity="0.08"></stop>
+</radialgradient>
+</defs>
+<!-- Hairline Octagons -->
+<polygon fill="none" points="150,30 235,65 270,150 235,235 150,270 65,235 30,150 65,65" stroke="rgba(255,255,255,0.12)" stroke-width="1"></polygon>
+<polygon fill="none" points="150,60 214,86 240,150 214,214 150,240 86,214 60,150 86,86" stroke="rgba(255,255,255,0.08)" stroke-dasharray="2,2" stroke-width="1"></polygon>
+<polygon fill="none" points="150,90 192,108 210,150 192,192 150,210 108,192 90,150 108,108" stroke="rgba(255,255,255,0.08)" stroke-width="1"></polygon>
+<polygon fill="none" points="150,120 171,129 180,150 171,171 150,180 129,171 120,150 129,129" stroke="rgba(255,255,255,0.05)" stroke-dasharray="2,2" stroke-width="1"></polygon>
+<!-- Axes Lines -->
+<line stroke="rgba(255,255,255,0.08)" stroke-width="1" x1="150" x2="150" y1="150" y2="30"></line>
+<line stroke="rgba(255,255,255,0.08)" stroke-width="1" x1="150" x2="235" y1="150" y2="65"></line>
+<line stroke="rgba(255,255,255,0.08)" stroke-width="1" x1="150" x2="270" y1="150" y2="150"></line>
+<line stroke="rgba(255,255,255,0.08)" stroke-width="1" x1="150" x2="235" y1="150" y2="235"></line>
+<line stroke="rgba(255,255,255,0.08)" stroke-width="1" x1="150" x2="150" y1="150" y2="270"></line>
+<line stroke="rgba(255,255,255,0.08)" stroke-width="1" x1="150" x2="65" y1="150" y2="235"></line>
+<line stroke="rgba(255,255,255,0.08)" stroke-width="1" x1="150" x2="30" y1="150" y2="150"></line>
+<line stroke="rgba(255,255,255,0.08)" stroke-width="1" x1="150" x2="65" y1="150" y2="65"></line>
+<!-- Data Polygon in Translucent Apple Blue -->
+<polygon fill="url(#appleRadarGlow)" points="150,56 221,78 236,150 218,218 150,255 87,213 52,150 85,85" stroke="#0A84FF" stroke-width="2" style="filter: drop-shadow(0 0 6px rgba(10,132,255,0.4));"></polygon>
+<!-- Vertices -->
+<circle cx="150" cy="56" fill="#0A84FF" r="3.5" stroke="#FFFFFF" stroke-width="1"></circle>
+<circle cx="221" cy="78" fill="#0A84FF" r="3.5" stroke="#FFFFFF" stroke-width="1"></circle>
+<circle cx="236" cy="150" fill="#0A84FF" r="3.5" stroke="#FFFFFF" stroke-width="1"></circle>
+<circle cx="218" cy="218" fill="#0A84FF" r="3.5" stroke="#FFFFFF" stroke-width="1"></circle>
+<circle cx="150" cy="255" fill="#0A84FF" r="3.5" stroke="#FFFFFF" stroke-width="1"></circle>
+<circle cx="87" cy="213" fill="#0A84FF" r="3.5" stroke="#FFFFFF" stroke-width="1"></circle>
+<circle cx="52" cy="150" fill="#0A84FF" r="3.5" stroke="#FFFFFF" stroke-width="1"></circle>
+<circle cx="85" cy="85" fill="#0A84FF" r="3.5" stroke="#FFFFFF" stroke-width="1"></circle>
+<!-- Clean SF Pro Labels -->
+<text fill="rgba(235, 235, 245, 0.6)" font-family="-apple-system, sans-serif" font-size="9" font-weight="600" text-anchor="middle" x="150" y="20">CHEST 78</text>
+<text fill="rgba(235, 235, 245, 0.6)" font-family="-apple-system, sans-serif" font-size="9" font-weight="600" text-anchor="start" x="245" y="60">BACK 84</text>
+<text fill="rgba(235, 235, 245, 0.6)" font-family="-apple-system, sans-serif" font-size="9" font-weight="600" text-anchor="start" x="278" y="154">SHOULDERS 72</text>
+<text fill="rgba(235, 235, 245, 0.6)" font-family="-apple-system, sans-serif" font-size="9" font-weight="600" text-anchor="start" x="245" y="246">ARMS 80</text>
+<text fill="rgba(235, 235, 245, 0.6)" font-family="-apple-system, sans-serif" font-size="9" font-weight="600" text-anchor="middle" x="150" y="290">LEGS 88</text>
+<text fill="rgba(235, 235, 245, 0.6)" font-family="-apple-system, sans-serif" font-size="9" font-weight="600" text-anchor="end" x="55" y="246">CORE 74</text>
+<text fill="rgba(235, 235, 245, 0.6)" font-family="-apple-system, sans-serif" font-size="9" font-weight="600" text-anchor="end" x="20" y="154">STR 82</text>
+<text fill="rgba(235, 235, 245, 0.6)" font-family="-apple-system, sans-serif" font-size="9" font-weight="600" text-anchor="end" x="55" y="60">END 76</text>
+</svg>
+</div>
+<!-- Telemetry Sub-card -->
+<div class="grid grid-cols-3 gap-2 pt-2 border-t border-white/10">
+<div class="apple-glass-card p-2 text-center">
+<span class="text-[10px] text-apple-labelTertiary block">Body Mass</span>
+<span class="text-xs font-mono font-semibold text-white">77.4 kg</span>
+<span class="text-[9px] text-apple-green block mt-0.5 font-medium">-0.6 kg</span>
+</div>
+<div class="apple-glass-card p-2 text-center">
+<span class="text-[10px] text-apple-labelTertiary block">Recent PR</span>
+<span class="text-xs font-mono font-semibold text-white">185 kg</span>
+<span class="text-[9px] text-apple-labelTertiary block mt-0.5">Deadlift</span>
+</div>
+<div class="apple-glass-card p-2 text-center">
+<span class="text-[10px] text-apple-labelTertiary block">Week Volume</span>
+<span class="text-xs font-mono font-semibold text-white">14.25 t</span>
+<span class="text-[9px] text-apple-blue block mt-0.5 font-medium">100% Target</span>
+</div>
+</div>
+</section>
+<!-- ALGORITHMIC LOG & COMPETITIVE TELEMETRY -->
+<section class="flex flex-col gap-2.5">
+<div class="flex items-center justify-between px-0.5">
+<span class="text-[11px] font-semibold uppercase tracking-wider text-apple-labelSecondary">Algorithmic Log</span>
+<span class="text-xs font-mono text-apple-purple font-semibold flex items-center gap-1 bg-apple-purple/10 px-2 py-0.5 rounded-full border border-apple-purple/20">
+<span class="material-symbols-outlined text-[14px]">psychology</span>
+          Rating: 1,642
+        </span>
+</div>
+<!-- LeetCode & Codeforces Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+<!-- LeetCode Card -->
+<div class="apple-glass-card p-3.5 flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-semibold text-apple-labelSecondary uppercase tracking-wider">LeetCode Progress</span>
+<span class="text-xs font-mono font-semibold text-white">342 Solved</span>
+</div>
+<!-- Segmented breakdown bar -->
+<div class="flex items-center gap-1 my-2.5">
+<div class="h-1.5 flex-1 rounded-full bg-apple-green" title="Easy: 110"></div>
+<div class="h-1.5 flex-[1.6] rounded-full bg-apple-orange" title="Medium: 184"></div>
+<div class="h-1.5 flex-[0.4] rounded-full bg-apple-red" title="Hard: 48"></div>
+</div>
+<div class="flex items-center justify-between text-[10px] font-mono text-apple-labelSecondary">
+<span class="text-apple-green">Easy: 110</span>
+<span class="text-apple-orange">Med: 184</span>
+<span class="text-apple-red">Hard: 48</span>
+</div>
+</div>
+<!-- Codeforces Card -->
+<div class="apple-glass-card p-3.5 flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-semibold text-apple-labelSecondary uppercase tracking-wider">Codeforces</span>
+<span class="px-2 py-0.5 rounded-full bg-apple-purple/15 text-apple-purple text-[10px] font-mono font-semibold">Candidate Master</span>
+</div>
+<div class="flex items-baseline justify-between my-1">
+<span class="text-xl font-mono font-semibold text-white">1,642 <span class="text-xs text-apple-green font-normal">(+48)</span></span>
+<span class="text-[11px] text-apple-labelSecondary">28 Contests</span>
+</div>
+<div class="flex items-center justify-between text-[10px] text-apple-labelSecondary font-mono">
+<span>Max: 1,675</span>
+<span class="text-apple-blue flex items-center gap-1">● Next: 18:00</span>
+</div>
+</div>
+</div>
+<!-- Problem Dispatch Feed -->
+<div class="apple-glass-panel p-3 flex flex-col gap-2">
+<span class="text-[10px] font-semibold uppercase tracking-wider text-apple-labelTertiary px-1">Recent Problem Dispatch</span>
+<div class="flex items-center justify-between p-2.5 rounded-xl apple-glass-card">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="px-1.5 py-0.5 rounded bg-apple-red/15 text-apple-red font-mono text-[9px] font-bold">HARD</span>
+<div class="min-w-0">
+<p class="text-xs font-medium text-white truncate">295. Median from Data Stream</p>
+<span class="text-[10px] text-apple-labelSecondary">Heaps • Two Pointers • C++20</span>
+</div>
+</div>
+<span class="text-[10px] font-mono text-apple-labelTertiary flex-shrink-0">2h ago</span>
+</div>
+<div class="flex items-center justify-between p-2.5 rounded-xl apple-glass-card">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="px-1.5 py-0.5 rounded bg-apple-orange/15 text-apple-orange font-mono text-[9px] font-bold">MED</span>
+<div class="min-w-0">
+<p class="text-xs font-medium text-white truncate">207. Course Schedule</p>
+<span class="text-[10px] text-apple-labelSecondary">Topological Sort • DAG</span>
+</div>
+</div>
+<span class="text-[10px] font-mono text-apple-labelTertiary flex-shrink-0">5h ago</span>
+</div>
+<div class="flex items-center justify-between p-2.5 rounded-xl apple-glass-card">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="px-1.5 py-0.5 rounded bg-apple-purple/15 text-apple-purple font-mono text-[9px] font-bold">CF 1600</span>
+<div class="min-w-0">
+<p class="text-xs font-medium text-white truncate">1941E. Rudolf and the Ball Game</p>
+<span class="text-[10px] text-apple-labelSecondary">DP with Bitsets • Modulo</span>
+</div>
+</div>
+<span class="text-[10px] font-mono text-apple-labelTertiary flex-shrink-0">Yesterday</span>
+</div>
+</div>
+</section>
+<!-- CHRONOLOGICAL PROTOCOL (Apple Timeline Schedule) -->
+<section class="flex flex-col gap-2.5">
+<div class="flex items-center justify-between px-0.5">
+<span class="text-[11px] font-semibold uppercase tracking-wider text-apple-labelSecondary">Chronological Protocol</span>
+<span class="text-[10px] font-mono text-apple-labelTertiary">UTC-4</span>
+</div>
+<div class="apple-glass-panel p-4 flex flex-col gap-3 relative">
+<!-- Timeline Vertical Track -->
+<div class="absolute left-6 top-6 bottom-6 w-px bg-white/10 pointer-events-none"></div>
+<!-- Event 1 (Completed) -->
+<div class="flex items-start gap-3 relative">
+<div class="w-4 h-4 rounded-full bg-apple-green flex items-center justify-center flex-shrink-0 z-10 text-black mt-1 shadow-sm">
+<span class="material-symbols-outlined text-[10px] font-bold">check</span>
+</div>
+<div class="flex-1 min-w-0 apple-glass-card p-2.5">
+<div class="flex items-center justify-between">
+<span class="text-xs font-mono font-medium text-white">07:00 AM</span>
+<span class="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-apple-green/15 text-apple-green">COMPLETED</span>
+</div>
+<p class="text-xs font-medium text-white mt-1">Push Hypertrophy Protocol</p>
+<span class="text-[11px] text-apple-labelSecondary">Compound Chest &amp; Shoulder progression</span>
+</div>
+</div>
+<!-- Event 2 (Current Focus) -->
+<div class="flex items-start gap-3 relative">
+<div class="w-4 h-4 rounded-full bg-apple-blue flex items-center justify-center flex-shrink-0 z-10 text-white mt-1 shadow-[0_0_8px_rgba(10,132,255,0.8)]">
+<span class="material-symbols-outlined text-[10px]">play_arrow</span>
+</div>
+<div class="flex-1 min-w-0 apple-glass-card border-apple-blue/40 p-2.5">
+<div class="flex items-center justify-between">
+<span class="text-xs font-mono font-medium text-apple-blue">10:00 AM</span>
+<span class="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-apple-blue/20 text-apple-blue">FOCUS BLOCK</span>
+</div>
+<p class="text-xs font-medium text-white mt-1">Distributed Systems &amp; Red-Black Tree Implementation</p>
+<span class="text-[11px] text-apple-labelSecondary">Locking mechanisms &amp; amortized analysis</span>
+</div>
+</div>
+<!-- Event 3 (Contest) -->
+<div class="flex items-start gap-3 relative">
+<div class="w-4 h-4 rounded-full bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0 z-10 text-apple-labelSecondary mt-1">
+<span class="material-symbols-outlined text-[9px]">code</span>
+</div>
+<div class="flex-1 min-w-0 apple-glass-card p-2.5">
+<div class="flex items-center justify-between">
+<span class="text-xs font-mono font-medium text-white">06:00 PM</span>
+<span class="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-apple-purple/15 text-apple-purple">CONTEST</span>
+</div>
+<p class="text-xs font-medium text-white mt-1">Codeforces Round #940 Div. 2</p>
+<span class="text-[11px] text-apple-labelSecondary">Rated algorithmic competition (2.0h)</span>
+</div>
+</div>
+<!-- Event 4 (Night Routine) -->
+<div class="flex items-start gap-3 relative">
+<div class="w-4 h-4 rounded-full bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0 z-10 text-apple-labelSecondary mt-1">
+<span class="material-symbols-outlined text-[9px]">menu_book</span>
+</div>
+<div class="flex-1 min-w-0 apple-glass-card p-2.5">
+<div class="flex items-center justify-between">
+<span class="text-xs font-mono font-medium text-white">09:00 PM</span>
+<span class="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-white/10 text-apple-labelSecondary">HABIT</span>
+</div>
+<p class="text-xs font-medium text-white mt-1">Designing Data-Intensive Applications</p>
+<span class="text-[11px] text-apple-labelSecondary">Chapter 7: Transactions &amp; Serializability</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- VisionOS Elevated Floating Pill Dock -->
+<nav class="fixed bottom-3 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none pb-safe">
+<div class="pointer-events-auto h-14 max-w-sm w-full visionos-dock rounded-full px-3 flex items-center justify-between">
+<a aria-current="page" class="flex flex-col items-center justify-center flex-1 h-full text-apple-blue transition-colors apple-spring-press" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="text-[9px] font-semibold tracking-tight mt-0.5">Overview</span>
+</a>
+<a class="flex flex-col items-center justify-center flex-1 h-full text-apple-labelSecondary hover:text-white transition-colors apple-spring-press" href="#">
+<span class="material-symbols-outlined text-[20px]">task_alt</span>
+<span class="text-[9px] font-medium tracking-tight mt-0.5">Tasks</span>
+</a>
+<a class="flex flex-col items-center justify-center flex-1 h-full text-apple-labelSecondary hover:text-white transition-colors apple-spring-press" href="#">
+<span class="material-symbols-outlined text-[20px]">timer</span>
+<span class="text-[9px] font-medium tracking-tight mt-0.5">Focus</span>
+</a>
+<a class="flex flex-col items-center justify-center flex-1 h-full text-apple-labelSecondary hover:text-white transition-colors apple-spring-press" href="#">
+<span class="material-symbols-outlined text-[20px]">bolt</span>
+<span class="text-[9px] font-medium tracking-tight mt-0.5">Fitness</span>
+</a>
+<a class="flex flex-col items-center justify-center flex-1 h-full text-apple-labelSecondary hover:text-white transition-colors apple-spring-press" href="#">
+<span class="material-symbols-outlined text-[20px]">grid_view</span>
+<span class="text-[9px] font-medium tracking-tight mt-0.5">More</span>
+</a>
+</div>
+</nav>
+<!-- Fully functional interactive JavaScript -->
+<script>
+  // --- POMODORO TIMER CLIENT INTERACTIVITY ---
+  let pomoDuration = 25 * 60; // 25 min default
+  let pomoTimeLeft = 21 * 60 + 33; // Starts at 21:33
+  let isPomoRunning = true;
+  let pomoTimerInterval = null;
+
+  function formatTime(seconds) {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  function updatePomodoroUI() {
+    const display = document.getElementById('pomo-timer-display');
+    const circle = document.getElementById('pomo-svg-progress');
+    if (display) display.textContent = formatTime(pomoTimeLeft);
+
+    if (circle) {
+      const circumference = 264;
+      const progressFraction = pomoTimeLeft / pomoDuration;
+      const offset = circumference * (1 - progressFraction);
+      circle.style.strokeDashoffset = offset;
+    }
+  }
+
+  function startPomodoro() {
+    if (pomoTimerInterval) clearInterval(pomoTimerInterval);
+    isPomoRunning = true;
+    const playBtn = document.getElementById('pomo-btn-text');
+    const playIcon = document.getElementById('pomo-icon');
+    const statusTag = document.getElementById('pomo-status-tag');
+    if (playBtn) playBtn.textContent = 'Pause';
+    if (playIcon) playIcon.textContent = 'pause';
+    if (statusTag) {
+      statusTag.textContent = 'ACTIVE';
+      statusTag.className = 'text-[9px] font-semibold uppercase tracking-wider text-apple-blue';
+    }
+
+    pomoTimerInterval = setInterval(() => {
+      if (pomoTimeLeft > 0) {
+        pomoTimeLeft--;
+        updatePomodoroUI();
+      } else {
+        clearInterval(pomoTimerInterval);
+        isPomoRunning = false;
+        if (playBtn) playBtn.textContent = 'Restart';
+        if (playIcon) playIcon.textContent = 'replay';
+        if (statusTag) {
+          statusTag.textContent = 'DONE';
+          statusTag.className = 'text-[9px] font-semibold uppercase tracking-wider text-apple-green';
+        }
+      }
+    }, 1000);
+  }
+
+  function pausePomodoro() {
+    clearInterval(pomoTimerInterval);
+    isPomoRunning = false;
+    const playBtn = document.getElementById('pomo-btn-text');
+    const playIcon = document.getElementById('pomo-icon');
+    const statusTag = document.getElementById('pomo-status-tag');
+    if (playBtn) playBtn.textContent = 'Resume';
+    if (playIcon) playIcon.textContent = 'play_arrow';
+    if (statusTag) {
+      statusTag.textContent = 'PAUSED';
+      statusTag.className = 'text-[9px] font-semibold uppercase tracking-wider text-apple-labelSecondary';
+    }
+  }
+
+  function togglePomodoroTimer() {
+    if (isPomoRunning) {
+      pausePomodoro();
+    } else {
+      if (pomoTimeLeft <= 0) pomoTimeLeft = pomoDuration;
+      startPomodoro();
+    }
+  }
+
+  function resetPomodoroTimer() {
+    pausePomodoro();
+    pomoTimeLeft = pomoDuration;
+    updatePomodoroUI();
+    const playBtn = document.getElementById('pomo-btn-text');
+    const playIcon = document.getElementById('pomo-icon');
+    if (playBtn) playBtn.textContent = 'Start';
+    if (playIcon) playIcon.textContent = 'play_arrow';
+  }
+
+  function skipPomodoroSession() {
+    pausePomodoro();
+    pomoTimeLeft = 0;
+    updatePomodoroUI();
+    const statusTag = document.getElementById('pomo-status-tag');
+    if (statusTag) statusTag.textContent = 'SKIPPED';
+  }
+
+  function setPomoMode(mode) {
+    const focusBtn = document.getElementById('pomo-mode-focus');
+    const shortBtn = document.getElementById('pomo-mode-short');
+    const longBtn = document.getElementById('pomo-mode-long');
+    const baseClass = 'px-2.5 py-0.5 rounded-full text-apple-labelSecondary hover:text-white transition-all';
+    const activeClass = 'px-2.5 py-0.5 rounded-full bg-white/20 text-white shadow-sm transition-all';
+
+    [focusBtn, shortBtn, longBtn].forEach(b => { if (b) b.className = baseClass; });
+
+    if (mode === 'focus') {
+      pomoDuration = 25 * 60;
+      if (focusBtn) focusBtn.className = activeClass;
+    } else if (mode === 'short') {
+      pomoDuration = 5 * 60;
+      if (shortBtn) shortBtn.className = activeClass;
+    } else if (mode === 'long') {
+      pomoDuration = 15 * 60;
+      if (longBtn) longBtn.className = activeClass;
+    }
+    pomoTimeLeft = pomoDuration;
+    resetPomodoroTimer();
+    startPomodoro();
+  }
+
+  // --- TASK ENGINE INTERACTIVITY ---
+  function updateTaskCounters() {
+    const allTasks = document.querySelectorAll('.task-card');
+    const doneTasks = document.querySelectorAll('.task-card[data-status="completed"]');
+    const totalCount = allTasks.length;
+    const completedCount = doneTasks.length;
+
+    const taskBadge = document.getElementById('task-badge-total');
+    if (taskBadge) taskBadge.textContent = totalCount;
+
+    const kpiCounter = document.getElementById('kpi-task-counter');
+    if (kpiCounter) kpiCounter.textContent = `${completedCount}/${totalCount}`;
+
+    const completionRate = document.getElementById('kpi-completion-rate');
+    if (completionRate && totalCount > 0) {
+      const pct = Math.round((completedCount / totalCount) * 100);
+      completionRate.textContent = `${pct}%`;
+    }
+  }
+
+  function toggleTaskStatus(button) {
+    const card = button.closest('.task-card');
+    if (!card) return;
+    const title = card.querySelector('.task-title');
+    const statusIcon = card.querySelector('.material-symbols-outlined:last-child');
+    const isCompleted = card.getAttribute('data-status') === 'completed';
+
+    if (isCompleted) {
+      card.setAttribute('data-status', 'pending');
+      button.className = 'w-5 h-5 rounded-full border border-white/30 hover:border-apple-blue flex items-center justify-center flex-shrink-0 transition-colors apple-spring-press';
+      button.innerHTML = '<span class="material-symbols-outlined text-[13px] text-transparent hover:text-apple-blue">check</span>';
+      if (title) {
+        title.classList.remove('line-through', 'text-apple-labelSecondary');
+        title.classList.add('text-white');
+      }
+      if (statusIcon) {
+        statusIcon.textContent = 'circle';
+        statusIcon.className = 'material-symbols-outlined text-[16px] text-white/20 flex-shrink-0';
+      }
+    } else {
+      card.setAttribute('data-status', 'completed');
+      button.className = 'w-5 h-5 rounded-full bg-apple-green flex items-center justify-center flex-shrink-0 text-black shadow-sm transition-all apple-spring-press';
+      button.innerHTML = '<span class="material-symbols-outlined text-[13px] font-bold">check</span>';
+      if (title) {
+        title.classList.add('line-through', 'text-apple-labelSecondary');
+        title.classList.remove('text-white');
+      }
+      if (statusIcon) {
+        statusIcon.textContent = 'check_circle';
+        statusIcon.className = 'material-symbols-outlined text-[16px] text-apple-green flex-shrink-0';
+      }
+
+      const xpText = document.getElementById('xp-text');
+      if (xpText) {
+        let currentXP = parseInt(xpText.textContent.replace(',', '')) || 8450;
+        currentXP += 50;
+        xpText.textContent = currentXP.toLocaleString();
+      }
+    }
+    updateTaskCounters();
+  }
+
+  function filterTasks(status) {
+    const cards = document.querySelectorAll('.task-card');
+    const filterAll = document.getElementById('filter-all');
+    const filterPending = document.getElementById('filter-pending');
+    const filterCompleted = document.getElementById('filter-completed');
+
+    const defaultBtnClass = 'px-2.5 py-0.5 rounded-full text-apple-labelSecondary hover:text-white transition-all';
+    const activeBtnClass = 'px-2.5 py-0.5 rounded-full bg-white/20 text-white font-medium transition-all';
+
+    [filterAll, filterPending, filterCompleted].forEach(b => { if (b) b.className = defaultBtnClass; });
+
+    if (status === 'all') {
+      if (filterAll) filterAll.className = activeBtnClass;
+      cards.forEach(c => c.style.display = 'flex');
+    } else if (status === 'pending') {
+      if (filterPending) filterPending.className = activeBtnClass;
+      cards.forEach(c => c.style.display = c.getAttribute('data-status') === 'pending' ? 'flex' : 'none');
+    } else if (status === 'completed') {
+      if (filterCompleted) filterCompleted.className = activeBtnClass;
+      cards.forEach(c => c.style.display = c.getAttribute('data-status') === 'completed' ? 'flex' : 'none');
+    }
+  }
+
+  function handleTaskInputKey(e) {
+    if (e.key === 'Enter') {
+      const input = document.getElementById('quick-task-input');
+      const val = input.value.trim();
+      if (!val) return;
+
+      const container = document.getElementById('task-list-container');
+      const newCard = document.createElement('div');
+      newCard.setAttribute('data-status', 'pending');
+      newCard.className = 'task-card apple-glass-card p-3 flex items-center justify-between gap-3';
+      newCard.innerHTML = `
+        <div class="flex items-center gap-3 min-w-0 flex-1">
+          <button onclick="toggleTaskStatus(this)" class="w-5 h-5 rounded-full border border-white/30 hover:border-apple-blue flex items-center justify-center flex-shrink-0 transition-colors apple-spring-press">
+            <span class="material-symbols-outlined text-[13px] text-transparent hover:text-apple-blue">check</span>
+          </button>
+          <div class="min-w-0 flex-1">
+            <p class="text-[13px] text-white font-normal truncate task-title">${val}</p>
+            <div class="flex items-center gap-2 mt-0.5 text-[10px]">
+              <span class="px-1.5 py-0.2 rounded bg-apple-blue/15 text-apple-blue font-medium">NEW</span>
+              <span class="font-mono text-apple-labelTertiary">Just now</span>
+              <span class="font-mono text-apple-labelTertiary">+60 XP</span>
+            </div>
+          </div>
+        </div>
+        <span class="material-symbols-outlined text-[16px] text-white/20 flex-shrink-0">circle</span>
+      `;
+      container.prepend(newCard);
+      input.value = '';
+      updateTaskCounters();
+    }
+  }
+
+  function triggerQuickAction(type) {
+    const input = document.getElementById('quick-task-input');
+    if (type === 'task') {
+      if (input) input.focus();
+    } else if (type === 'pomodoro') {
+      setPomoMode('focus');
+    } else if (type === 'workout') {
+      if (input) {
+        input.value = 'Logged Workout: 5x5 Squats + Accessory Core';
+        handleTaskInputKey({ key: 'Enter' });
+      }
+    } else if (type === 'code') {
+      if (input) {
+        input.value = 'LC 15-Minute Daily Problem';
+        handleTaskInputKey({ key: 'Enter' });
+      }
+    } else if (type === 'note') {
+      if (input) {
+        input.value = 'Evening retrospective & memory consolidation';
+        handleTaskInputKey({ key: 'Enter' });
+      }
+    }
+  }
+
+  // --- HEATMAP GENERATION (7 rows x 12 cols = 84 nodes) ---
+  function initHeatmap() {
+    const grid = document.getElementById('heatmap-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    // Authentic Apple Blue Luminance Spectrum
+    const colors = [
+      'bg-white/10',     // 0 None
+      'bg-[#003870]',    // 1 Low
+      'bg-[#0055A5]',    // 2 Mid
+      'bg-[#0077E6]',    // 3 High
+      'bg-[#0A84FF]'     // 4 Peak Apple Blue
+    ];
+
+    const activityLevels = [
+      1,2,0,3,4,2,3, 2,3,4,4,1,0,3, 3,4,2,4,4,3,1, 0,2,3,3,4,4,2,
+      2,3,4,1,3,4,4, 4,4,3,2,1,0,3, 2,3,4,4,4,3,4, 3,4,4,2,3,4,1,
+      0,3,4,4,3,2,4, 4,3,4,4,4,3,2, 3,4,4,4,3,4,4, 4,4,4,4,3,4,4
+    ];
+
+    for (let i = 0; i < 84; i++) {
+      const cell = document.createElement('div');
+      const lvl = activityLevels[i] !== undefined ? activityLevels[i] : Math.floor(Math.random() * 5);
+      cell.className = `w-2.5 h-2.5 rounded-[3px] ${colors[lvl]} cursor-pointer transition-transform hover:scale-125`;
+      cell.setAttribute('data-day', i + 1);
+      cell.setAttribute('data-activity', lvl);
+
+      cell.addEventListener('click', () => {
+        const info = document.getElementById('heatmap-selected-info');
+        if (info) {
+          const actLabels = ['Rest day (0 tasks)', '1 task completed', '3 actions logged', '5 actions (High Flow)', '8+ actions (Peak Day)'];
+          info.innerHTML = `Day -${84 - i}: <strong class="text-apple-blue font-semibold">${actLabels[lvl]}</strong>`;
+        }
+      });
+      grid.appendChild(cell);
+    }
+  }
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    startPomodoro();
+    initHeatmap();
+    updateTaskCounters();
+  });
+  startPomodoro();
+  initHeatmap();
+  updateTaskCounters();
+</script>
+</body></html>
