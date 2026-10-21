@@ -8,6 +8,7 @@ import {
   ExercisePerformanceLog,
 } from "../lib/fitness-calc";
 import { WorkoutSession, BodyweightEntry } from "../lib/storage/store";
+import { REAL_EXERCISES } from "../lib/exercises-data";
 
 interface PhysiqueRadarProps {
   workouts: WorkoutSession[];
@@ -44,7 +45,7 @@ export function PhysiqueRadar({
         type: "barbell" as const,
         primaryMuscle: mapExerciseToPrimaryMuscle(s.exerciseId),
       },
-      date: w.startedAt.slice(0, 10),
+      date: w.startedAt?.slice(0, 10) || new Date().toISOString().slice(0, 10),
       sets: [{ reps: s.reps, weightKg: s.weightKg, completed: s.completed }],
       userBodyweightKg: currentBodyweightKg,
     }))
@@ -57,8 +58,11 @@ export function PhysiqueRadar({
   const centerY = 150;
   const maxR = 115;
 
+  const hasAnySets = performanceLogs.length > 0;
+
   const currentPoints = AXES_ORDER.map((axis) => {
-    const scoreVal = scores[axis.key]?.score ?? 40; // Default visualization baseline if insufficient
+    // If user has not logged sets, show subtle empty polygon at 20%
+    const scoreVal = hasAnySets ? (scores[axis.key]?.score ?? 25) : 20;
     const r = (scoreVal / 100) * maxR;
     const rad = (axis.angleDeg * Math.PI) / 180;
     const x = centerX + r * Math.cos(rad);
@@ -70,7 +74,7 @@ export function PhysiqueRadar({
 
   // Previous comparison points (historical offset ~ -5%)
   const prevPoints = AXES_ORDER.map((axis) => {
-    const scoreVal = Math.max(20, (scores[axis.key]?.score ?? 40) - 6);
+    const scoreVal = Math.max(15, (scores[axis.key]?.score ?? 20) - 5);
     const r = (scoreVal / 100) * maxR;
     const rad = (axis.angleDeg * Math.PI) / 180;
     const x = centerX + r * Math.cos(rad);
@@ -78,8 +82,21 @@ export function PhysiqueRadar({
     return `${Math.round(x)},${Math.round(y)}`;
   }).join(" ");
 
-  // Telemetry sub-metrics
+  // Real telemetry calculations
   const totalVolume = workouts.reduce((acc, w) => acc + (w.totalVolumeKg || 0), 0);
+  
+  // Find real heaviest lift across all logged sets
+  let maxWeightLift: { exerciseName: string; weightKg: number } | null = null;
+  for (const w of workouts) {
+    for (const s of w.sets) {
+      if (s.completed && s.weightKg > 0) {
+        if (!maxWeightLift || s.weightKg > maxWeightLift.weightKg) {
+          maxWeightLift = { exerciseName: s.exerciseName, weightKg: s.weightKg };
+        }
+      }
+    }
+  }
+
   const weightDelta =
     bodyweightLogs.length >= 2
       ? Math.round(
@@ -87,56 +104,32 @@ export function PhysiqueRadar({
         ) / 10
       : 0;
 
-  // Real highest PR from logged workouts
-  const bestLoggedSet = workouts
-    .flatMap((w) => w.sets)
-    .filter((s) => s.completed && s.weightKg > 0)
-    .sort((a, b) => b.weightKg - a.weightKg)[0];
-
-  const validScores = Object.values(scores)
-    .map((s) => s.score)
-    .filter((s): s is number => s !== null);
-
-  const avgScore =
-    validScores.length > 0
-      ? Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length)
-      : 0;
-
-  const rankTier =
-    avgScore >= 85
-      ? "CLASS S"
-      : avgScore >= 70
-      ? "CLASS A"
-      : avgScore >= 50
-      ? "CLASS B"
-      : avgScore >= 25
-      ? "CLASS C"
-      : "CLASS D";
-
   return (
     <section className="apple-glass-panel p-4 flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <div className="flex flex-col">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-apple-labelSecondary">
-            Physique RPG Matrix
+            Physique Matrix
           </span>
           <span className="text-sm font-semibold text-white">
-            8-Axis Musculoskeletal Index
+            8-Axis Musculoskeletal Balance
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setComparePreviousMonth(!comparePreviousMonth)}
-            className={`px-2 py-0.5 rounded-full text-[10px] font-mono transition-all apple-spring-press ${
-              comparePreviousMonth
-                ? "bg-apple-purple text-white shadow-sm"
-                : "bg-white/10 text-apple-labelSecondary hover:text-white"
-            }`}
-          >
-            {comparePreviousMonth ? "Comparing Prev" : "Compare"}
-          </button>
+          {hasAnySets && (
+            <button
+              onClick={() => setComparePreviousMonth(!comparePreviousMonth)}
+              className={`px-2 py-0.5 rounded-full text-[10px] font-mono transition-all apple-spring-press ${
+                comparePreviousMonth
+                  ? "bg-apple-purple text-white shadow-sm"
+                  : "bg-white/10 text-apple-labelSecondary hover:text-white"
+              }`}
+            >
+              {comparePreviousMonth ? "Comparing Prev" : "Compare"}
+            </button>
+          )}
           <span className="px-2 py-0.5 rounded-full bg-white/10 text-[11px] font-mono text-white font-semibold border border-white/10">
-            {rankTier}
+            {hasAnySets ? "CALIBRATED" : "ZERO STATE"}
           </span>
         </div>
       </div>
@@ -146,8 +139,8 @@ export function PhysiqueRadar({
         <svg className="w-full h-full overflow-visible" viewBox="0 0 300 300">
           <defs>
             <radialGradient cx="50%" cy="50%" id="appleRadarGlow" r="50%">
-              <stop offset="0%" stopColor="#0A84FF" stopOpacity="0.38"></stop>
-              <stop offset="100%" stopColor="#0A84FF" stopOpacity="0.08"></stop>
+              <stop offset="0%" stopColor="#0A84FF" stopOpacity="0.38" />
+              <stop offset="100%" stopColor="#0A84FF" stopOpacity="0.08" />
             </radialGradient>
           </defs>
 
@@ -231,7 +224,7 @@ export function PhysiqueRadar({
             const labelR = maxR + 20;
             const x = centerX + labelR * Math.cos(rad);
             const y = centerY + labelR * Math.sin(rad);
-            const scoreDisplay = scores[axis.key]?.score ?? "--";
+            const scoreDisplay = scores[axis.key]?.score ? `${scores[axis.key]?.score}` : "--";
             const textAnchor =
               Math.abs(Math.cos(rad)) < 0.2
                 ? "middle"
@@ -264,8 +257,7 @@ export function PhysiqueRadar({
         <div className="apple-glass-card p-3 flex flex-col gap-1.5 border-apple-blue/50 text-xs animate-in fade-in duration-200">
           <div className="flex items-center justify-between">
             <span className="font-semibold text-white flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-apple-blue"></span>
-              {selectedMuscle.name}: {selectedMuscle.score ?? "Insufficient Data"} / 100
+              {selectedMuscle.name}: {selectedMuscle.score ?? "No sets recorded yet"} / 100
             </span>
             <span className="px-1.5 py-0.2 rounded text-[10px] font-mono uppercase bg-white/10 text-apple-labelSecondary">
               Confidence: {selectedMuscle.confidence}
@@ -274,11 +266,6 @@ export function PhysiqueRadar({
           <p className="text-apple-labelSecondary text-[11px] leading-relaxed">
             {selectedMuscle.explanation}
           </p>
-          {selectedMuscle.benchmarkSource && (
-            <span className="text-[10px] text-apple-labelTertiary font-mono">
-              Benchmark Source: {selectedMuscle.benchmarkSource}
-            </span>
-          )}
           <button
             onClick={() => setSelectedMuscle(null)}
             className="self-end text-[10px] text-apple-blue hover:underline mt-1"
@@ -288,33 +275,33 @@ export function PhysiqueRadar({
         </div>
       )}
 
-      {/* Telemetry Sub-card */}
+      {/* Real Telemetry Sub-card */}
       <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10">
         <div className="apple-glass-card p-2 text-center">
-          <span className="text-[10px] text-apple-labelTertiary block">Body Mass</span>
+          <span className="text-[10px] text-neutral-400 block uppercase">Bodyweight</span>
           <span className="text-xs font-mono font-semibold text-white">
             {currentBodyweightKg} kg
           </span>
-          <span className="text-[9px] text-apple-green block mt-0.5 font-medium">
-            {weightDelta <= 0 ? `${weightDelta} kg` : `+${weightDelta} kg`}
+          <span className="text-[9px] text-neutral-400 block mt-0.5">
+            {weightDelta !== 0 ? `${weightDelta > 0 ? "+" : ""}${weightDelta} kg` : "Baseline"}
           </span>
         </div>
         <div className="apple-glass-card p-2 text-center">
-          <span className="text-[10px] text-apple-labelTertiary block">Recent PR</span>
+          <span className="text-[10px] text-neutral-400 block uppercase">Peak Weight</span>
           <span className="text-xs font-mono font-semibold text-white">
-            {bestLoggedSet ? `${bestLoggedSet.weightKg} kg` : "-- kg"}
+            {maxWeightLift ? `${maxWeightLift.weightKg} kg` : "--"}
           </span>
-          <span className="text-[9px] text-apple-labelTertiary block mt-0.5 truncate max-w-[90px] mx-auto">
-            {bestLoggedSet ? bestLoggedSet.exerciseName : "No sets yet"}
+          <span className="text-[9px] text-neutral-400 block mt-0.5 truncate">
+            {maxWeightLift ? maxWeightLift.exerciseName : "No sets yet"}
           </span>
         </div>
         <div className="apple-glass-card p-2 text-center">
-          <span className="text-[10px] text-apple-labelTertiary block">Week Volume</span>
+          <span className="text-[10px] text-neutral-400 block uppercase">Total Volume</span>
           <span className="text-xs font-mono font-semibold text-white">
-            {(totalVolume / 1000).toFixed(2)} t
+            {totalVolume > 0 ? `${(totalVolume / 1000).toFixed(1)} t` : "0 kg"}
           </span>
-          <span className="text-[9px] text-apple-blue block mt-0.5 font-medium">
-            {totalVolume > 0 ? "Active Load" : "0% Target"}
+          <span className="text-[9px] text-apple-blue block mt-0.5">
+            {workouts.length} workout{workouts.length === 1 ? "" : "s"}
           </span>
         </div>
       </div>
@@ -323,12 +310,14 @@ export function PhysiqueRadar({
 }
 
 function mapExerciseToPrimaryMuscle(exerciseId: string): MuscleGroup {
-  if (exerciseId.includes("bench") || exerciseId.includes("pushup") || exerciseId.includes("chest") || exerciseId.includes("fly")) return "chest";
-  if (exerciseId.includes("deadlift") || exerciseId.includes("row") || exerciseId.includes("pullup") || exerciseId.includes("chinup") || exerciseId.includes("lat")) return "back";
-  if (exerciseId.includes("overhead") || exerciseId.includes("raise") || exerciseId.includes("press") && !exerciseId.includes("bench")) return "shoulders";
-  if (exerciseId.includes("curl") && !exerciseId.includes("leg")) return "biceps";
-  if (exerciseId.includes("tricep") || exerciseId.includes("crusher") || exerciseId.includes("dips_triceps")) return "triceps";
-  if (exerciseId.includes("squat") || exerciseId.includes("leg_press") || exerciseId.includes("extension")) return "quadriceps";
-  if (exerciseId.includes("romanian") || exerciseId.includes("thrust") || exerciseId.includes("leg_curl") || exerciseId.includes("ham")) return "hamstrings_glutes";
+  const found = REAL_EXERCISES.find((e) => e.id === exerciseId);
+  if (found) return found.primaryMuscle;
+  if (exerciseId.includes("bench") || exerciseId.includes("fly") || exerciseId.includes("pushup")) return "chest";
+  if (exerciseId.includes("deadlift") || exerciseId.includes("row") || exerciseId.includes("pullup") || exerciseId.includes("pulldown")) return "back";
+  if (exerciseId.includes("overhead") || exerciseId.includes("shoulder") || exerciseId.includes("raise") || exerciseId.includes("press")) return "shoulders";
+  if (exerciseId.includes("curl")) return "biceps";
+  if (exerciseId.includes("tricep") || exerciseId.includes("crusher") || exerciseId.includes("dip")) return "triceps";
+  if (exerciseId.includes("squat") || exerciseId.includes("leg_press") || exerciseId.includes("lunge")) return "quadriceps";
+  if (exerciseId.includes("romanian") || exerciseId.includes("thrust") || exerciseId.includes("curl") || exerciseId.includes("glute")) return "hamstrings_glutes";
   return "core";
 }

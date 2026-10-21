@@ -1,250 +1,156 @@
 "use client";
 
-import { useState } from "react";
-import { supabase } from "../lib/supabase/client";
-import { UserSession } from "../lib/storage/store";
+import React, { useState } from "react";
+import { useAuth } from "../lib/auth/auth-context";
+import { Lock, Mail, ArrowRight, ShieldCheck, Eye, EyeOff } from "lucide-react";
 
-interface LoginPageProps {
-  onLoginSuccess: (session: UserSession) => void;
-}
-
-export function LoginPage({ onLoginSuccess }: LoginPageProps) {
+export function LoginPage() {
+  const { login } = useAuth();
   const [email, setEmail] = useState("lakshyajha210606@gmail.com");
   const [password, setPassword] = useState("naruto@21");
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-  const [infoMsg, setInfoMsg] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    setErrorMsg("");
-    setInfoMsg("");
-    setLoading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    if (!email.trim() || !password.trim()) {
+      setErrorMessage("Please enter both email and password.");
+      return;
+    }
 
+    setIsSubmitting(true);
     try {
-      if (mode === "signin") {
-        if (supabase) {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: email.trim(),
-            password: password.trim(),
-          });
-
-          if (error) {
-            // If Supabase has "Email not confirmed" or if using default pre-configured credentials
-            if (
-              email.trim() === "lakshyajha210606@gmail.com" &&
-              password.trim() === "naruto@21"
-            ) {
-              // Sign in with the registered Supabase User ID for Lakshya
-              onLoginSuccess({
-                userId: "e9381d3a-f207-4dca-88da-0dbcfc3ea354",
-                email: "lakshyajha210606@gmail.com",
-                displayName: "Lakshya",
-              });
-              setLoading(false);
-              return;
-            }
-            setErrorMsg(error.message);
-            setLoading(false);
-            return;
-          }
-
-          if (data?.user) {
-            onLoginSuccess({
-              userId: data.user.id,
-              email: data.user.email || email,
-              displayName: data.user.user_metadata?.displayName || "Lakshya",
-            });
-            setLoading(false);
-            return;
-          }
-        }
-
-        // Fallback if offline/local
-        onLoginSuccess({
-          userId: "e9381d3a-f207-4dca-88da-0dbcfc3ea354",
-          email: email.trim(),
-          displayName: "Lakshya",
-        });
-      } else {
-        // Sign Up
-        if (supabase) {
-          const { data, error } = await supabase.auth.signUp({
-            email: email.trim(),
-            password: password.trim(),
-            options: {
-              data: {
-                displayName: email.split("@")[0],
-              },
-            },
-          });
-
-          if (error) {
-            setErrorMsg(error.message);
-            setLoading(false);
-            return;
-          }
-
-          if (data?.user) {
-            setInfoMsg("Account created! You can now sign in.");
-            setMode("signin");
-          }
-        }
+      const res = await login(email, password);
+      if (!res.success) {
+        setErrorMessage(res.error || "Authentication failed.");
       }
-    } catch (err: any) {
-      setErrorMsg(err?.message || "Authentication error occurred.");
+    } catch {
+      setErrorMessage("An unexpected authentication error occurred.");
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleInstantDefaultLogin = () => {
+  const handleUseDefault = () => {
     setEmail("lakshyajha210606@gmail.com");
     setPassword("naruto@21");
-    onLoginSuccess({
-      userId: "e9381d3a-f207-4dca-88da-0dbcfc3ea354",
-      email: "lakshyajha210606@gmail.com",
-      displayName: "Lakshya",
-    });
+    setErrorMessage(null);
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col justify-center items-center px-4 py-12 selection:bg-apple-blue selection:text-white">
-      <div className="w-full max-w-sm flex flex-col gap-5">
-        {/* Apple Squircle Brand Icon */}
-        <div className="flex flex-col items-center text-center gap-2">
-          <div className="w-16 h-16 rounded-[22px] bg-gradient-to-b from-white/20 via-white/10 to-white/5 border border-white/20 flex items-center justify-center text-apple-blue shadow-[0_8px_32px_rgba(10,132,255,0.25)]">
-            <span className="material-symbols-outlined text-[34px]">
-              terminal
-            </span>
+    <div className="min-h-screen w-full bg-black text-white flex flex-col justify-center items-center px-4 relative overflow-hidden">
+      {/* Subtle atmospheric ambient glow */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="w-full max-w-sm z-10">
+        {/* Terminal Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-white/[0.06] border border-white/10 mb-4 shadow-inner">
+            <ShieldCheck className="w-6 h-6 text-apple-blue" />
           </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-white mt-2">
-              Control Center
-            </h1>
-            <p className="text-xs text-apple-labelSecondary mt-0.5">
-              Personal Telemetry &amp; Executive Command
-            </p>
-          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">
+            Control Center
+          </h1>
+          <p className="text-xs text-neutral-400 mt-1">
+            Personal Telemetry & Executive Command Console
+          </p>
         </div>
 
-        {/* Login Panel */}
-        <div className="apple-glass-panel p-5 flex flex-col gap-4">
-          <div className="flex bg-white/[0.08] p-0.5 rounded-full text-xs font-medium border border-white/10">
-            <button
-              onClick={() => {
-                setMode("signin");
-                setErrorMsg("");
-              }}
-              className={`flex-1 py-1 rounded-full transition-all ${
-                mode === "signin"
-                  ? "bg-white/20 text-white font-semibold shadow-sm"
-                  : "text-apple-labelSecondary hover:text-white"
-              }`}
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => {
-                setMode("signup");
-                setErrorMsg("");
-              }}
-              className={`flex-1 py-1 rounded-full transition-all ${
-                mode === "signup"
-                  ? "bg-white/20 text-white font-semibold shadow-sm"
-                  : "text-apple-labelSecondary hover:text-white"
-              }`}
-            >
-              Sign Up
-            </button>
-          </div>
-
-          {/* Instant Login Button for the user's default ID */}
-          <button
-            onClick={handleInstantDefaultLogin}
-            className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-apple-blue/25 to-apple-indigo/25 hover:from-apple-blue/35 hover:to-apple-indigo/35 border border-apple-blue/40 text-apple-blue text-xs font-semibold flex items-center justify-center gap-2 apple-spring-press shadow-sm"
-          >
-            <span className="material-symbols-outlined text-[16px]">bolt</span>
-            <span>Sign In as lakshyajha210606@gmail.com</span>
-          </button>
-
-          <div className="flex items-center gap-2 my-0.5">
-            <div className="flex-1 h-px bg-white/10"></div>
-            <span className="text-[10px] uppercase font-mono text-apple-labelTertiary">
-              or enter credentials
-            </span>
-            <div className="flex-1 h-px bg-white/10"></div>
-          </div>
-
-          {errorMsg && (
-            <div className="p-2.5 rounded-xl bg-apple-red/15 border border-apple-red/30 text-apple-red text-xs leading-relaxed flex items-start gap-2">
-              <span className="material-symbols-outlined text-[16px] mt-0.5">
-                error
-              </span>
-              <span>{errorMsg}</span>
-            </div>
-          )}
-
-          {infoMsg && (
-            <div className="p-2.5 rounded-xl bg-apple-green/15 border border-apple-green/30 text-apple-green text-xs leading-relaxed flex items-start gap-2">
-              <span className="material-symbols-outlined text-[16px] mt-0.5">
-                check_circle
-              </span>
-              <span>{infoMsg}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        {/* Login Card */}
+        <div className="apple-glass-panel p-6 border border-white/10 shadow-2xl backdrop-blur-xl">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="text-[11px] font-medium text-apple-labelSecondary block mb-1">
-                Email
+              <label className="block text-[11px] font-medium text-neutral-300 uppercase tracking-wider mb-1.5">
+                Operator Email
               </label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="operative@domain.com"
-                className="w-full bg-white/[0.08] border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-apple-blue"
-              />
+              <div className="relative flex items-center">
+                <Mail className="absolute left-3 w-4 h-4 text-neutral-400" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@domain.com"
+                  autoComplete="email"
+                  required
+                  className="w-full bg-white/[0.05] border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-apple-blue transition-colors font-mono"
+                />
+              </div>
             </div>
 
             <div>
-              <label className="text-[11px] font-medium text-apple-labelSecondary block mb-1">
-                Password
-              </label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-white/[0.08] border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-apple-blue font-mono"
-              />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-[11px] font-medium text-neutral-300 uppercase tracking-wider">
+                  Password
+                </label>
+              </div>
+              <div className="relative flex items-center">
+                <Lock className="absolute left-3 w-4 h-4 text-neutral-400" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  required
+                  className="w-full bg-white/[0.05] border border-white/10 rounded-xl pl-9 pr-10 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-apple-blue transition-colors font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 text-neutral-400 hover:text-white transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
+
+            {errorMessage && (
+              <div className="p-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs text-center font-medium">
+                {errorMessage}
+              </div>
+            )}
 
             <button
               type="submit"
-              disabled={loading}
-              className="w-full py-2.5 rounded-xl bg-apple-blue hover:bg-apple-blue/90 text-white font-semibold text-sm transition-all apple-spring-press shadow-[0_2px_14px_rgba(10,132,255,0.4)] mt-1 flex items-center justify-center gap-2 disabled:opacity-60"
+              disabled={isSubmitting}
+              className="w-full mt-2 py-2.5 px-4 rounded-xl bg-apple-blue text-white font-semibold text-xs tracking-wide hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              {loading ? (
-                <span className="text-xs font-mono">Authenticating...</span>
+              {isSubmitting ? (
+                <span>Authenticating...</span>
               ) : (
-                <span>{mode === "signin" ? "Sign In" : "Create Account"}</span>
+                <>
+                  <span>Sign In</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
               )}
             </button>
           </form>
+
+          {/* Quick Credential Helper */}
+          <div className="mt-5 pt-4 border-t border-white/10 flex flex-col gap-2">
+            <div className="flex items-center justify-between text-[11px] text-neutral-400">
+              <span>Default Operator:</span>
+              <button
+                type="button"
+                onClick={handleUseDefault}
+                className="text-apple-blue hover:underline font-mono text-[11px]"
+              >
+                Autofill Credentials
+              </button>
+            </div>
+            <div className="bg-white/[0.03] border border-white/[0.06] rounded-lg p-2 font-mono text-[11px] text-neutral-300 flex flex-col gap-0.5">
+              <div className="truncate">lakshyajha210606@gmail.com</div>
+              <div className="text-neutral-500">Pass: naruto@21</div>
+            </div>
+          </div>
         </div>
 
-        {/* Security Telemetry Badge */}
-        <div className="flex items-center justify-center gap-1.5 text-[11px] text-apple-labelTertiary">
-          <span className="material-symbols-outlined text-[14px]">
-            verified_user
-          </span>
-          <span>End-to-End Encrypted • Row Level Security</span>
-        </div>
+        {/* Security Footer */}
+        <p className="text-center text-[11px] text-neutral-500 mt-6">
+          Encrypted Session Gate · Local Persistent Vault
+        </p>
       </div>
     </div>
   );

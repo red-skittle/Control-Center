@@ -3,16 +3,9 @@
 import { useState, useEffect } from "react";
 import { supabase, isSupabaseConfigured } from "../supabase/client";
 
-export interface UserSession {
-  userId: string;
-  email: string;
-  displayName: string;
-}
-
 export interface UserProfile {
   displayName: string;
   avatarInitials: string;
-  email: string;
   heightCm: number;
   currentBodyweightKg: number;
   weightUpdatedAt: string;
@@ -32,6 +25,8 @@ export interface UserProfile {
   synchronyMultiplier: number;
   disciplineRatio: number;
   notes?: string;
+  leetcodeUsername?: string;
+  codeforcesUsername?: string;
 }
 
 export interface BodyweightEntry {
@@ -52,6 +47,36 @@ export interface TaskItem {
   isCompleted: boolean;
   xpReward: number;
   subtasks: { id: string; title: string; completed: boolean }[];
+}
+
+export interface PomodoroSession {
+  id: string;
+  durationSeconds: number;
+  elapsedSeconds: number;
+  mode: "focus" | "short" | "long";
+  subject: string;
+  subtopic: string;
+  completed: boolean;
+  startedAt: string;
+  endedAt: string;
+}
+
+export interface HabitItem {
+  id: string;
+  title: string;
+  category: string;
+  targetType: "binary" | "numeric";
+  targetValue: number;
+  unit?: string;
+  scheduledDays: number[]; // 0=Sun..6=Sat
+  isArchived: boolean;
+}
+
+export interface HabitCompletion {
+  id: string;
+  habitId: string;
+  completionDate: string; // YYYY-MM-DD
+  value: number;
 }
 
 export interface WorkoutSetItem {
@@ -85,7 +110,7 @@ export interface RunningLogEntry {
   heartRateAvg?: number;
   runType: "easy" | "tempo" | "interval" | "long_run" | "race";
   notes?: string;
-  runDate: string;
+  runDate: string; // YYYY-MM-DD
 }
 
 export interface CodingProblemEntry {
@@ -94,7 +119,7 @@ export interface CodingProblemEntry {
   problemId: string;
   title: string;
   url?: string;
-  difficulty: string; // "Easy" | "Medium" | "Hard" | "1600" etc.
+  difficulty: string;
   rating?: number;
   topicTags: string[];
   dateSolved: string; // YYYY-MM-DD
@@ -105,61 +130,70 @@ export interface CodingProblemEntry {
   reviewDate?: string;
 }
 
-export interface HabitItem {
-  id: string;
-  title: string;
-  category: string;
-  targetType: "binary" | "numeric";
-  targetValue: number;
-  unit?: string;
-  scheduledDays: number[];
-  isArchived: boolean;
-}
-
-export interface HabitCompletion {
-  id: string;
-  habitId: string;
-  completionDate: string;
-  value: number;
-}
-
 export interface CalendarEventItem {
   id: string;
   title: string;
   description?: string;
   eventType: "deadline" | "exam" | "contest" | "workout" | "personal" | "milestone";
-  startTime: string;
+  startTime: string; // ISO
   endTime?: string;
   isAllDay: boolean;
   isCompleted: boolean;
 }
 
-// Default clean initial profile for Lakshya
-const DEFAULT_REAL_PROFILE: UserProfile = {
+export interface GoalItem {
+  id: string;
+  title: string;
+  category: "coding" | "fitness" | "running" | "focus" | "habits" | "academic";
+  targetValue: number;
+  currentValue: number;
+  unit: string;
+  startDate: string;
+  targetDate?: string;
+  isCompleted: boolean;
+}
+
+// ==============================================================================
+// REAL DATA DEFAULTS - PURGED OF ALL SYNTHETIC FAKE ENTRIES
+// ==============================================================================
+const DEFAULT_PROFILE: UserProfile = {
   displayName: "Lakshya",
   avatarInitials: "LJ",
-  email: "lakshyajha210606@gmail.com",
-  heightCm: 180,
-  currentBodyweightKg: 77.4,
+  heightCm: 178,
+  currentBodyweightKg: 75.0,
   weightUpdatedAt: new Date().toISOString().slice(0, 10),
   preferredUnits: "metric",
-  age: 20,
+  age: 21,
   biologicalSex: "male",
-  bodyFatPct: 13.0,
-  restingHr: 52,
+  bodyFatPct: 14.0,
+  restingHr: 58,
   trainingExperience: "intermediate",
-  weeklyWorkoutTarget: 5,
+  weeklyWorkoutTarget: 4,
   weeklyRunningTargetKm: 15,
-  timezone: "UTC+05:30",
+  timezone: "UTC",
   weekStartDay: 1,
-  xp: 1500,
-  level: 5,
-  disciplineTitle: "Discipline Architect",
-  synchronyMultiplier: 1.45,
-  disciplineRatio: 96.5,
-  notes: "Clean real metrics. Focus on compound progressive overload and algorithmic mastery.",
+  xp: 0,
+  level: 1,
+  disciplineTitle: "Operative",
+  synchronyMultiplier: 1.0,
+  disciplineRatio: 100,
+  notes: "Genuine telemetry stream active.",
+  leetcodeUsername: "",
+  codeforcesUsername: "",
 };
 
+// All arrays initialize purely empty - only real data created by user will appear
+const DEFAULT_BODYWEIGHT_LOGS: BodyweightEntry[] = [];
+const DEFAULT_TASKS: TaskItem[] = [];
+const DEFAULT_HABITS: HabitItem[] = [];
+const DEFAULT_HABIT_COMPLETIONS: HabitCompletion[] = [];
+const DEFAULT_WORKOUTS: WorkoutSession[] = [];
+const DEFAULT_RUNS: RunningLogEntry[] = [];
+const DEFAULT_CODING_PROBLEMS: CodingProblemEntry[] = [];
+const DEFAULT_CALENDAR_EVENTS: CalendarEventItem[] = [];
+const DEFAULT_GOALS: GoalItem[] = [];
+
+// Storage prefix dedicated to real telemetry store
 const STORAGE_PREFIX = "control_center_real_v2_";
 
 function loadFromStorage<T>(key: string, fallback: T): T {
@@ -168,7 +202,7 @@ function loadFromStorage<T>(key: string, fallback: T): T {
     const item = localStorage.getItem(STORAGE_PREFIX + key);
     return item ? JSON.parse(item) : fallback;
   } catch (err) {
-    console.warn(`Failed to read ${key} from storage:`, err);
+    console.warn(`Failed to read ${key} from localStorage:`, err);
     return fallback;
   }
 }
@@ -178,200 +212,60 @@ function saveToStorage<T>(key: string, data: T): void {
   try {
     localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(data));
   } catch (err) {
-    console.warn(`Failed to write ${key} to storage:`, err);
+    console.warn(`Failed to write ${key} to localStorage:`, err);
   }
 }
 
 /**
- * Main application hook for user authentication & real persisted records
+ * Universal Reactive Store Hook
  */
 export function useControlCenterStore() {
-  const [currentUser, setCurrentUser] = useState<UserSession | null>(() =>
-    loadFromStorage<UserSession | null>("auth_user", null)
-  );
-
   const [profile, setProfile] = useState<UserProfile>(() =>
-    loadFromStorage("profile", DEFAULT_REAL_PROFILE)
-  );
-
-  // REAL DATA ONLY - zero fake entries
-  const [workouts, setWorkouts] = useState<WorkoutSession[]>(() =>
-    loadFromStorage<WorkoutSession[]>("workouts", [])
+    loadFromStorage("profile", DEFAULT_PROFILE)
   );
   const [bodyweightLogs, setBodyweightLogs] = useState<BodyweightEntry[]>(() =>
-    loadFromStorage<BodyweightEntry[]>("bodyweight_logs", [
-      {
-        id: "bw-initial",
-        weightKg: 77.4,
-        recordedDate: new Date().toISOString().slice(0, 10),
-        notes: "Baseline measurement",
-      },
-    ])
-  );
-  const [codingProblems, setCodingProblems] = useState<CodingProblemEntry[]>(() =>
-    loadFromStorage<CodingProblemEntry[]>("coding_problems", [])
+    loadFromStorage("bodyweight_logs", DEFAULT_BODYWEIGHT_LOGS)
   );
   const [tasks, setTasks] = useState<TaskItem[]>(() =>
-    loadFromStorage<TaskItem[]>("tasks", [])
+    loadFromStorage("tasks", DEFAULT_TASKS)
+  );
+  const [habits, setHabits] = useState<HabitItem[]>(() =>
+    loadFromStorage("habits", DEFAULT_HABITS)
   );
   const [habitCompletions, setHabitCompletions] = useState<HabitCompletion[]>(() =>
-    loadFromStorage<HabitCompletion[]>("habit_completions", [])
+    loadFromStorage("habit_completions", DEFAULT_HABIT_COMPLETIONS)
+  );
+  const [workouts, setWorkouts] = useState<WorkoutSession[]>(() =>
+    loadFromStorage("workouts", DEFAULT_WORKOUTS)
   );
   const [runs, setRuns] = useState<RunningLogEntry[]>(() =>
-    loadFromStorage<RunningLogEntry[]>("runs", [])
+    loadFromStorage("runs", DEFAULT_RUNS)
+  );
+  const [codingProblems, setCodingProblems] = useState<CodingProblemEntry[]>(() =>
+    loadFromStorage("coding_problems", DEFAULT_CODING_PROBLEMS)
   );
   const [calendarEvents, setCalendarEvents] = useState<CalendarEventItem[]>(() =>
-    loadFromStorage<CalendarEventItem[]>("calendar_events", [])
+    loadFromStorage("calendar_events", DEFAULT_CALENDAR_EVENTS)
+  );
+  const [goals, setGoals] = useState<GoalItem[]>(() =>
+    loadFromStorage("goals", DEFAULT_GOALS)
   );
 
-  // Sync to local storage
-  useEffect(() => saveToStorage("auth_user", currentUser), [currentUser]);
+  // Synchronize state changes to localStorage
   useEffect(() => saveToStorage("profile", profile), [profile]);
-  useEffect(() => saveToStorage("workouts", workouts), [workouts]);
   useEffect(() => saveToStorage("bodyweight_logs", bodyweightLogs), [bodyweightLogs]);
-  useEffect(() => saveToStorage("coding_problems", codingProblems), [codingProblems]);
   useEffect(() => saveToStorage("tasks", tasks), [tasks]);
+  useEffect(() => saveToStorage("habits", habits), [habits]);
   useEffect(() => saveToStorage("habit_completions", habitCompletions), [habitCompletions]);
+  useEffect(() => saveToStorage("workouts", workouts), [workouts]);
   useEffect(() => saveToStorage("runs", runs), [runs]);
+  useEffect(() => saveToStorage("coding_problems", codingProblems), [codingProblems]);
   useEffect(() => saveToStorage("calendar_events", calendarEvents), [calendarEvents]);
+  useEffect(() => saveToStorage("goals", goals), [goals]);
 
-  // Sync with Supabase on mount / auth change
-  useEffect(() => {
-    async function initSupabaseUser() {
-      if (!isSupabaseConfigured || !supabase) return;
-
-      const { data } = await supabase.auth.getSession();
-      if (data?.session?.user) {
-        const u = data.session.user;
-        setCurrentUser({
-          userId: u.id,
-          email: u.email || "lakshyajha210606@gmail.com",
-          displayName: u.user_metadata?.displayName || "Lakshya",
-        });
-
-        // Load profile from Supabase profiles table
-        try {
-          const { data: profileRow } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("user_id", u.id)
-            .single();
-
-          if (profileRow) {
-            setProfile((prev) => ({
-              ...prev,
-              displayName: profileRow.display_name || prev.displayName,
-              heightCm: profileRow.height_cm || prev.heightCm,
-              currentBodyweightKg: profileRow.current_bodyweight_kg || prev.currentBodyweightKg,
-              preferredUnits: profileRow.preferred_units || prev.preferredUnits,
-              xp: profileRow.xp || prev.xp,
-              level: profileRow.level || prev.level,
-            }));
-          }
-
-          // Load real workouts from Supabase
-          const { data: workoutRows } = await supabase
-            .from("workouts")
-            .select("*, workout_sets(*)")
-            .eq("user_id", u.id)
-            .order("started_at", { ascending: false });
-
-          if (workoutRows && workoutRows.length > 0) {
-            const mappedWorkouts: WorkoutSession[] = workoutRows.map((w: any) => ({
-              id: w.id,
-              name: w.name,
-              startedAt: w.started_at,
-              completedAt: w.completed_at,
-              notes: w.notes,
-              totalVolumeKg: Number(w.total_volume_kg) || 0,
-              sets: (w.workout_sets || []).map((s: any) => ({
-                id: s.id,
-                exerciseId: s.exercise_id,
-                exerciseName: s.exercise_id,
-                setNumber: s.set_number,
-                reps: s.reps,
-                weightKg: Number(s.weight_kg),
-                completed: s.completed,
-              })),
-            }));
-            setWorkouts(mappedWorkouts);
-          }
-
-          // Load real coding problems from Supabase
-          const { data: codingRows } = await supabase
-            .from("coding_problems")
-            .select("*")
-            .eq("user_id", u.id)
-            .order("date_solved", { ascending: false });
-
-          if (codingRows && codingRows.length > 0) {
-            setCodingProblems(
-              codingRows.map((cp: any) => ({
-                id: cp.id,
-                platform: cp.platform,
-                problemId: cp.problem_id,
-                title: cp.title,
-                url: cp.url,
-                difficulty: cp.difficulty,
-                rating: cp.rating,
-                topicTags: cp.topic_tags || [],
-                dateSolved: cp.date_solved,
-                language: cp.language,
-                notes: cp.notes,
-                approach: cp.approach,
-                status: cp.status,
-              }))
-            );
-          }
-        } catch (err) {
-          console.warn("Could not sync from Supabase tables:", err);
-        }
-      }
-    }
-
-    initSupabaseUser();
-  }, []);
-
-  // --- ACTIONS ---
-
-  const loginUser = (session: UserSession) => {
-    setCurrentUser(session);
-    setProfile((prev) => ({
-      ...prev,
-      email: session.email,
-      displayName: session.displayName || prev.displayName,
-      avatarInitials: (session.displayName || "Lakshya").slice(0, 2).toUpperCase(),
-    }));
-  };
-
-  const logoutUser = async () => {
-    if (supabase) {
-      await supabase.auth.signOut();
-    }
-    setCurrentUser(null);
-  };
-
+  // Actions
   const updateProfile = (partial: Partial<UserProfile>) => {
-    setProfile((prev) => {
-      const updated = { ...prev, ...partial };
-      // Sync to Supabase if authenticated
-      if (supabase && currentUser?.userId) {
-        supabase
-          .from("profiles")
-          .upsert({
-            user_id: currentUser.userId,
-            display_name: updated.displayName,
-            height_cm: updated.heightCm,
-            current_bodyweight_kg: updated.currentBodyweightKg,
-            preferred_units: updated.preferredUnits,
-            xp: updated.xp,
-            level: updated.level,
-            updated_at: new Date().toISOString(),
-          })
-          .then();
-      }
-      return updated;
-    });
+    setProfile((prev) => ({ ...prev, ...partial }));
   };
 
   const addBodyweightLog = (weightKg: number, recordedDate: string, notes?: string) => {
@@ -386,115 +280,10 @@ export function useControlCenterStore() {
       currentBodyweightKg: weightKg,
       weightUpdatedAt: recordedDate,
     });
-
-    if (supabase && currentUser?.userId) {
-      supabase
-        .from("bodyweight_logs")
-        .insert({
-          user_id: currentUser.userId,
-          weight_kg: weightKg,
-          recorded_date: recordedDate,
-          notes,
-        })
-        .then();
-    }
   };
 
   const deleteBodyweightLog = (id: string) => {
     setBodyweightLogs((prev) => prev.filter((b) => b.id !== id));
-  };
-
-  const addWorkout = async (workout: Omit<WorkoutSession, "id">) => {
-    const newId = "w-" + Date.now();
-    const newWorkout: WorkoutSession = {
-      ...workout,
-      id: newId,
-    };
-
-    setWorkouts((prev) => [newWorkout, ...prev]);
-
-    // Recalculate XP (+150 XP per completed workout)
-    setProfile((p) => {
-      const newXp = p.xp + 150;
-      const newLvl = Math.floor(newXp / 350) + 1;
-      return { ...p, xp: newXp, level: newLvl };
-    });
-
-    // Save to Supabase
-    if (supabase && currentUser?.userId) {
-      try {
-        const { data: createdW } = await supabase
-          .from("workouts")
-          .insert({
-            user_id: currentUser.userId,
-            name: workout.name,
-            started_at: workout.startedAt,
-            completed_at: workout.completedAt || new Date().toISOString(),
-            notes: workout.notes,
-            total_volume_kg: workout.totalVolumeKg,
-          })
-          .select("id")
-          .single();
-
-        if (createdW && workout.sets.length > 0) {
-          const setsPayload = workout.sets.map((s, idx) => ({
-            workout_id: createdW.id,
-            user_id: currentUser.userId,
-            exercise_id: s.exerciseId,
-            set_number: idx + 1,
-            reps: s.reps,
-            weight_kg: s.weightKg,
-            completed: s.completed,
-          }));
-          await supabase.from("workout_sets").insert(setsPayload);
-        }
-      } catch (e) {
-        console.warn("Failed to write workout to Supabase:", e);
-      }
-    }
-  };
-
-  const addCodingProblem = async (problem: Omit<CodingProblemEntry, "id">) => {
-    const newProb: CodingProblemEntry = {
-      ...problem,
-      id: "cp-" + Date.now(),
-    };
-    setCodingProblems((prev) => [newProb, ...prev]);
-
-    // Recalculate XP (+100 XP for Med, +150 for Hard)
-    const xpBonus = problem.difficulty.toLowerCase().includes("hard") ? 150 : 100;
-    setProfile((p) => {
-      const newXp = p.xp + xpBonus;
-      const newLvl = Math.floor(newXp / 350) + 1;
-      return { ...p, xp: newXp, level: newLvl };
-    });
-
-    // Save to Supabase
-    if (supabase && currentUser?.userId) {
-      try {
-        await supabase.from("coding_problems").insert({
-          user_id: currentUser.userId,
-          platform: problem.platform,
-          problem_id: problem.problemId,
-          title: problem.title,
-          url: problem.url,
-          difficulty: problem.difficulty,
-          rating: problem.rating,
-          topic_tags: problem.topicTags,
-          date_solved: problem.dateSolved,
-          language: problem.language,
-          notes: problem.notes,
-          approach: problem.approach,
-          status: problem.status,
-        });
-      } catch (e) {
-        console.warn("Failed to write coding problem to Supabase:", e);
-      }
-    }
-  };
-
-  const deleteCodingProblem = (id: string) => {
-    setCodingProblems((prev) => prev.filter((p) => p.id !== id));
   };
 
   const addTask = (title: string, priority: "low" | "medium" | "high" = "medium", category = "GENERAL") => {
@@ -508,20 +297,6 @@ export function useControlCenterStore() {
       subtasks: [],
     };
     setTasks((prev) => [newTask, ...prev]);
-
-    if (supabase && currentUser?.userId) {
-      supabase
-        .from("tasks")
-        .insert({
-          user_id: currentUser.userId,
-          title,
-          priority,
-          category,
-          is_completed: false,
-          xp_reward: 60,
-        })
-        .then();
-    }
     return newTask;
   };
 
@@ -533,8 +308,8 @@ export function useControlCenterStore() {
           if (nextState) {
             setProfile((p) => {
               const newXp = p.xp + t.xpReward;
-              const newLvl = Math.floor(newXp / 350) + 1;
-              return { ...p, xp: newXp, level: newLvl };
+              const newLevel = Math.floor(newXp / 350) + 1;
+              return { ...p, xp: newXp, level: newLevel };
             });
           }
           return { ...t, isCompleted: nextState };
@@ -548,26 +323,117 @@ export function useControlCenterStore() {
     setTasks((prev) => prev.filter((t) => t.id !== id));
   };
 
+  const addRun = (run: Omit<RunningLogEntry, "id">) => {
+    const newRun: RunningLogEntry = {
+      ...run,
+      id: "run-" + Date.now(),
+    };
+    setRuns((prev) => [newRun, ...prev]);
+    setProfile((p) => {
+      const newXp = p.xp + 100;
+      const newLevel = Math.floor(newXp / 350) + 1;
+      return { ...p, xp: newXp, level: newLevel };
+    });
+  };
+
+  const addWorkout = (workout: Omit<WorkoutSession, "id">) => {
+    const newWorkout: WorkoutSession = {
+      ...workout,
+      id: "w-" + Date.now(),
+    };
+    setWorkouts((prev) => [newWorkout, ...prev]);
+    setProfile((p) => {
+      const newXp = p.xp + 150;
+      const newLevel = Math.floor(newXp / 350) + 1;
+      return { ...p, xp: newXp, level: newLevel };
+    });
+  };
+
+  const deleteWorkout = (id: string) => {
+    setWorkouts((prev) => prev.filter((w) => w.id !== id));
+  };
+
+  const addCodingProblem = (problem: Omit<CodingProblemEntry, "id">) => {
+    const newProb: CodingProblemEntry = {
+      ...problem,
+      id: "cp-" + Date.now(),
+    };
+    setCodingProblems((prev) => [newProb, ...prev]);
+    setProfile((p) => {
+      const gain = problem.difficulty === "Hard" ? 150 : problem.difficulty === "Medium" ? 100 : 50;
+      const newXp = p.xp + gain;
+      const newLevel = Math.floor(newXp / 350) + 1;
+      return { ...p, xp: newXp, level: newLevel };
+    });
+  };
+
+  const deleteCodingProblem = (id: string) => {
+    setCodingProblems((prev) => prev.filter((c) => c.id !== id));
+  };
+
+  const toggleHabitToday = (habitId: string, todayIso: string) => {
+    setHabitCompletions((prev) => {
+      const exists = prev.some((c) => c.habitId === habitId && c.completionDate === todayIso);
+      if (exists) {
+        return prev.filter((c) => !(c.habitId === habitId && c.completionDate === todayIso));
+      } else {
+        setProfile((p) => ({ ...p, xp: p.xp + 50 }));
+        return [
+          ...prev,
+          {
+            id: "hc-" + Date.now(),
+            habitId,
+            completionDate: todayIso,
+            value: 1,
+          },
+        ];
+      }
+    });
+  };
+
+  const clearAllUserData = () => {
+    setProfile(DEFAULT_PROFILE);
+    setBodyweightLogs([]);
+    setTasks([]);
+    setHabits([]);
+    setHabitCompletions([]);
+    setWorkouts([]);
+    setRuns([]);
+    setCodingProblems([]);
+    setCalendarEvents([]);
+    setGoals([]);
+    if (typeof window !== "undefined") {
+      Object.keys(localStorage).forEach((k) => {
+        if (k.startsWith(STORAGE_PREFIX)) {
+          localStorage.removeItem(k);
+        }
+      });
+    }
+  };
+
   return {
-    currentUser,
-    loginUser,
-    logoutUser,
     profile,
     updateProfile,
-    workouts,
-    addWorkout,
     bodyweightLogs,
     addBodyweightLog,
     deleteBodyweightLog,
-    codingProblems,
-    addCodingProblem,
-    deleteCodingProblem,
     tasks,
     addTask,
     toggleTask,
     deleteTask,
+    habits,
     habitCompletions,
+    toggleHabitToday,
+    workouts,
+    addWorkout,
+    deleteWorkout,
     runs,
+    addRun,
+    codingProblems,
+    addCodingProblem,
+    deleteCodingProblem,
     calendarEvents,
+    goals,
+    clearAllUserData,
   };
 }

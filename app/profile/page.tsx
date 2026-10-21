@@ -5,27 +5,27 @@ import Link from "next/link";
 import { useControlCenterStore } from "../../lib/storage/store";
 import { TopHeader } from "../../components/TopHeader";
 import { VisionDock } from "../../components/VisionDock";
-import { LoginPage } from "../../components/LoginPage";
+import { AuthBarrier } from "../../components/AuthBarrier";
+import { useAuth } from "../../lib/auth/auth-context";
 
 export default function ProfilePage() {
   const {
-    currentUser,
-    loginUser,
-    logoutUser,
     profile,
     updateProfile,
     bodyweightLogs,
     addBodyweightLog,
     deleteBodyweightLog,
+    clearAllUserData,
   } = useControlCenterStore();
+  const { logout, user } = useAuth();
 
   const [displayName, setDisplayName] = useState(profile.displayName);
   const [heightCm, setHeightCm] = useState(profile.heightCm);
   const [currentBw, setCurrentBw] = useState(profile.currentBodyweightKg);
   const [preferredUnits, setPreferredUnits] = useState(profile.preferredUnits);
-  const [age, setAge] = useState(profile.age || 20);
+  const [age, setAge] = useState(profile.age || 24);
   const [biologicalSex, setBiologicalSex] = useState(profile.biologicalSex || "male");
-  const [bodyFatPct, setBodyFatPct] = useState(profile.bodyFatPct || 13.0);
+  const [bodyFatPct, setBodyFatPct] = useState(profile.bodyFatPct || 13.5);
   const [restingHr, setRestingHr] = useState(profile.restingHr || 52);
   const [trainingExperience, setTrainingExperience] = useState(profile.trainingExperience);
   const [weeklyWorkoutTarget, setWeeklyWorkoutTarget] = useState(profile.weeklyWorkoutTarget);
@@ -39,10 +39,6 @@ export default function ProfilePage() {
   const [newLogDate, setNewLogDate] = useState(new Date().toISOString().slice(0, 10));
   const [newLogNote, setNewLogNote] = useState("");
   const [saveNotification, setSaveNotification] = useState(false);
-
-  if (!currentUser) {
-    return <LoginPage onLoginSuccess={loginUser} />;
-  }
 
   // Calculate descriptive BMI: weight (kg) / (height (m) ^ 2)
   const heightM = heightCm > 0 ? heightCm / 100 : 0;
@@ -82,8 +78,8 @@ export default function ProfilePage() {
   };
 
   return (
-    <>
-      <TopHeader profile={profile} onLogout={logoutUser} />
+    <AuthBarrier>
+      <TopHeader profile={profile} />
 
       <main className="flex-col relative w-full pt-16 pb-28 bg-[#000000]">
         <div className="flex flex-col w-full max-w-lg mx-auto text-white px-4 pt-3 pb-8 gap-5">
@@ -98,20 +94,12 @@ export default function ProfilePage() {
                 Dashboard
               </Link>
               <h1 className="text-2xl font-bold tracking-tight text-white">
-                Profile &amp; Bio-Telemetry
+                Profile & Bio-Telemetry
               </h1>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-full bg-apple-blue/15 text-apple-blue text-xs font-mono font-semibold border border-apple-blue/30">
-                LVL {profile.level}
-              </span>
-              <button
-                onClick={logoutUser}
-                className="px-2.5 py-1 rounded-full bg-apple-red/15 text-apple-red text-xs font-semibold hover:bg-apple-red/25 transition-colors"
-              >
-                Logout
-              </button>
-            </div>
+            <span className="px-2.5 py-1 rounded-full bg-apple-blue/15 text-apple-blue text-xs font-mono font-semibold border border-apple-blue/30">
+              OPERATIVE #{profile.level}
+            </span>
           </div>
 
           {saveNotification && (
@@ -147,7 +135,7 @@ export default function ProfilePage() {
           {/* Core Profile Form */}
           <form onSubmit={handleSaveProfile} className="apple-glass-panel p-4 flex flex-col gap-3.5">
             <span className="text-xs font-semibold uppercase tracking-wider text-apple-labelSecondary border-b border-white/10 pb-2">
-              Identity &amp; Anthropometrics
+              Identity & Anthropometrics
             </span>
 
             <div className="grid grid-cols-2 gap-3">
@@ -249,7 +237,7 @@ export default function ProfilePage() {
             </div>
 
             <span className="text-xs font-semibold uppercase tracking-wider text-apple-labelSecondary border-b border-white/10 pb-2 pt-2">
-              Discipline &amp; Training Targets
+              Discipline & Training Targets
             </span>
 
             <div className="grid grid-cols-2 gap-3">
@@ -313,7 +301,7 @@ export default function ProfilePage() {
 
             <div>
               <label className="text-[11px] font-medium text-apple-labelSecondary block mb-1">
-                Training Notes &amp; Directives
+                Training Limitations & Custom Directives
               </label>
               <textarea
                 value={notes}
@@ -328,7 +316,7 @@ export default function ProfilePage() {
               type="submit"
               className="w-full py-2.5 rounded-xl bg-apple-blue hover:bg-apple-blue/90 text-white font-semibold text-sm transition-all apple-spring-press shadow-[0_2px_12px_rgba(10,132,255,0.4)]"
             >
-              Save Profile &amp; Recalculate Metrics
+              Save Profile & Recalculate Metrics
             </button>
           </form>
 
@@ -343,7 +331,7 @@ export default function ProfilePage() {
               </span>
             </div>
 
-            {/* Quick Log Form */}
+            {/* Quick Log Row */}
             <form onSubmit={handleAddWeightLog} className="flex gap-2">
               <input
                 type="number"
@@ -398,10 +386,40 @@ export default function ProfilePage() {
               ))}
             </div>
           </section>
-        </div>
-      </main>
 
-      <VisionDock />
-    </>
-  );
-}
+          {/* Vault Management & Security */}
+          <section className="apple-glass-panel p-4 flex flex-col gap-3 border border-red-500/20">
+              <span className="text-xs font-semibold uppercase tracking-wider text-red-400">
+                Security & Data Vault
+              </span>
+              <p className="text-xs text-neutral-400 leading-relaxed">
+                Logged in as <strong className="text-white font-mono">{user?.email || "lakshyajha210606@gmail.com"}</strong>. All logged sets, problems, and measurements are stored in your secure client vault.
+              </p>
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm("Reset all personal records and clear vault?")) {
+                      clearAllUserData();
+                    }
+                  }}
+                  className="flex-1 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-semibold border border-red-500/30 transition-colors"
+                >
+                  Clear All User Data
+                </button>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors"
+                >
+                  Sign Out
+                </button>
+              </div>
+            </section>
+          </div>
+        </main>
+
+        <VisionDock />
+      </AuthBarrier>
+    );
+  }

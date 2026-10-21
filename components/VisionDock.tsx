@@ -2,19 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LayoutDashboard, CheckSquare, Timer, Dumbbell, User } from "lucide-react";
 
-interface NavItem {
-  name: string;
-  href: string;
-  icon: string;
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { name: "Overview", href: "/", icon: "dashboard" },
-  { name: "Tasks", href: "/tasks", icon: "task_alt" },
-  { name: "Focus", href: "/focus", icon: "timer" },
-  { name: "Fitness", href: "/fitness", icon: "bolt" },
-  { name: "Profile", href: "/profile", icon: "person" },
+const NAV_ITEMS = [
+  { name: "Overview", href: "/", icon: LayoutDashboard },
+  { name: "Tasks", href: "/tasks", icon: CheckSquare },
+  { name: "Focus", href: "/focus", icon: Timer },
+  { name: "Fitness", href: "/fitness", icon: Dumbbell },
+  { name: "Profile", href: "/profile", icon: User },
 ];
 
 export function VisionDock() {
@@ -25,6 +20,7 @@ export function VisionDock() {
       <div className="pointer-events-auto h-14 max-w-sm w-full visionos-dock rounded-full px-3 flex items-center justify-between">
         {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href;
+          const IconComponent = item.icon;
           return (
             <Link
               key={item.name}
@@ -32,12 +28,10 @@ export function VisionDock() {
               className={`flex flex-col items-center justify-center flex-1 h-full transition-colors apple-spring-press ${
                 isActive
                   ? "text-apple-blue"
-                  : "text-apple-labelSecondary hover:text-white"
+                  : "text-neutral-400 hover:text-white"
               }`}
             >
-              <span className="material-symbols-outlined text-[20px]">
-                {item.icon}
-              </span>
+              <IconComponent className="w-5 h-5" />
               <span
                 className={`text-[9px] tracking-tight mt-0.5 ${
                   isActive ? "font-semibold" : "font-medium"

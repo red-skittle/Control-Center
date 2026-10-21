@@ -1,0 +1,8 @@
+{
+  "name": "Control Center",
+  "description": "Apple-inspired personal productivity, fitness, focus, and engineering telemetry center.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

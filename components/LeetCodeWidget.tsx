@@ -1,284 +1,368 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { CodingProblemEntry } from "../lib/storage/store";
+import { Code2, RefreshCw, Plus, ExternalLink, Check, Award } from "lucide-react";
 
 interface LeetCodeWidgetProps {
   problems: CodingProblemEntry[];
   onAddProblem: (problem: Omit<CodingProblemEntry, "id">) => void;
-  onDeleteProblem?: (id: string) => void;
+  savedUsername?: string;
+  onUpdateUsername?: (username: string) => void;
 }
 
 export function LeetCodeWidget({
   problems,
   onAddProblem,
-  onDeleteProblem,
+  savedUsername = "",
+  onUpdateUsername,
 }: LeetCodeWidgetProps) {
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [problemNumber, setProblemNumber] = useState("");
-  const [title, setTitle] = useState("");
-  const [difficulty, setDifficulty] = useState<"Easy" | "Medium" | "Hard">("Medium");
-  const [tags, setTags] = useState("");
-  const [language, setLanguage] = useState("C++20");
-  const [notes, setNotes] = useState("");
+  const [username, setUsername] = useState(savedUsername || "lakshyajha");
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [liveStats, setLiveStats] = useState<{
+    totalSolved: number;
+    easySolved: number;
+    mediumSolved: number;
+    hardSolved: number;
+    ranking?: number;
+  } | null>(null);
 
-  const lcProblems = problems.filter((p) => p.platform === "leetcode");
+  // Manual Log Modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formNumber, setFormNumber] = useState("");
+  const [formTitle, setFormTitle] = useState("");
+  const [formDifficulty, setFormDifficulty] = useState<"Easy" | "Medium" | "Hard">("Medium");
+  const [formTags, setFormTags] = useState("");
+  const [formNotes, setFormNotes] = useState("");
 
-  const easyCount = lcProblems.filter((p) => p.difficulty.toLowerCase() === "easy").length;
-  const medCount = lcProblems.filter((p) => p.difficulty.toLowerCase() === "medium").length;
-  const hardCount = lcProblems.filter((p) => p.difficulty.toLowerCase() === "hard").length;
-  const totalCount = easyCount + medCount + hardCount;
+  const leetcodeProblems = problems.filter((p) => p.platform === "leetcode");
+  const localTotal = leetcodeProblems.length;
+  const localEasy = leetcodeProblems.filter((p) => p.difficulty === "Easy").length;
+  const localMed = leetcodeProblems.filter((p) => p.difficulty === "Medium").length;
+  const localHard = leetcodeProblems.filter((p) => p.difficulty === "Hard").length;
 
-  const handleSave = (e: React.FormEvent) => {
+  // Fetch live stats when username is set
+  const fetchTelemetry = async (userToFetch: string) => {
+    if (!userToFetch.trim()) return;
+    setIsLoading(true);
+    setErrorMsg(null);
+    try {
+      const res = await fetch(`/api/telemetry/leetcode?username=${encodeURIComponent(userToFetch.trim())}`);
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error || "Profile unreachable");
+      } else {
+        setLiveStats({
+          totalSolved: data.totalSolved,
+          easySolved: data.easySolved,
+          mediumSolved: data.mediumSolved,
+          hardSolved: data.hardSolved,
+          ranking: data.ranking,
+        });
+        if (onUpdateUsername) onUpdateUsername(userToFetch.trim());
+      }
+    } catch {
+      setErrorMsg("Connection error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (savedUsername) {
+      setUsername(savedUsername);
+      fetchTelemetry(savedUsername);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedUsername]);
+
+  const handleSaveUsername = () => {
+    setIsEditingUsername(false);
+    fetchTelemetry(username);
+  };
+
+  const handleCreateSolve = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!formTitle.trim()) return;
 
     onAddProblem({
       platform: "leetcode",
-      problemId: problemNumber.trim() || String(Date.now()).slice(-4),
-      title: title.trim(),
-      difficulty,
-      topicTags: tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
+      problemId: formNumber.trim() || String(Date.now()).slice(-4),
+      title: formTitle.trim(),
+      difficulty: formDifficulty,
+      topicTags: formTags ? formTags.split(",").map((t) => t.trim()).filter(Boolean) : ["Algorithms"],
       dateSolved: new Date().toISOString().slice(0, 10),
-      language,
-      notes: notes.trim(),
+      language: "C++",
       status: "independent",
+      notes: formNotes.trim() || undefined,
+      url: formNumber ? `https://leetcode.com/problems/${formTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-")}/` : undefined,
     });
 
-    setTitle("");
-    setProblemNumber("");
-    setTags("");
-    setNotes("");
-    setShowAddModal(false);
+    setFormNumber("");
+    setFormTitle("");
+    setFormNotes("");
+    setFormTags("");
+    setIsModalOpen(false);
   };
 
+  const displayTotal = liveStats ? liveStats.totalSolved : localTotal;
+  const displayEasy = liveStats ? liveStats.easySolved : localEasy;
+  const displayMed = liveStats ? liveStats.mediumSolved : localMed;
+  const displayHard = liveStats ? liveStats.hardSolved : localHard;
+
   return (
-    <section className="apple-glass-panel p-4 flex flex-col gap-3">
+    <div className="apple-glass-panel p-5 flex flex-col gap-4 border border-white/10">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-apple-orange shadow-[0_0_8px_rgba(255,159,10,0.8)]"></span>
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-apple-labelSecondary">
-            LeetCode Telemetry
-          </span>
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+            <Code2 className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
+              LeetCode Telemetry
+              {liveStats?.ranking ? (
+                <span className="text-[10px] font-mono text-neutral-400 font-normal">
+                  Rank #{liveStats.ranking.toLocaleString()}
+                </span>
+              ) : null}
+            </h2>
+            <div className="flex items-center gap-1.5 text-[11px] text-neutral-400">
+              {isEditingUsername ? (
+                <div className="flex items-center gap-1 mt-0.5">
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="LeetCode username"
+                    className="bg-white/10 border border-white/20 rounded px-1.5 py-0.5 text-xs text-white outline-none font-mono"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleSaveUsername}
+                    className="text-apple-blue hover:text-white px-1 text-xs"
+                  >
+                    Save
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsEditingUsername(true)}
+                  className="hover:text-white transition-colors underline decoration-dotted font-mono text-[11px]"
+                >
+                  @{username || "set_handle"}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
+
         <div className="flex items-center gap-2">
-          <span className="text-xs font-mono font-bold text-white">
-            {totalCount} <span className="text-apple-labelSecondary font-normal">Solved</span>
-          </span>
           <button
-            onClick={() => setShowAddModal(true)}
-            className="px-2.5 py-0.5 rounded-full bg-apple-blue/20 hover:bg-apple-blue/30 text-apple-blue text-[11px] font-medium border border-apple-blue/30 apple-spring-press flex items-center gap-1"
+            onClick={() => fetchTelemetry(username)}
+            disabled={isLoading || !username}
+            title="Fetch Live Stats"
+            className="w-7 h-7 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 flex items-center justify-center transition-colors disabled:opacity-40"
           >
-            <span className="material-symbols-outlined text-[13px]">add</span>
-            Log Problem
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-apple-blue" : ""}`} />
+          </button>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-2.5 py-1 rounded-lg bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-medium flex items-center gap-1.5 transition-colors border border-white/10"
+          >
+            <Plus className="w-3.5 h-3.5 text-apple-blue" />
+            <span>Log Solve</span>
           </button>
         </div>
       </div>
 
-      {/* Segmented Breakdown Bar */}
-      <div className="apple-glass-card p-3 flex flex-col gap-2">
-        <div className="flex items-center justify-between text-[11px] font-mono text-apple-labelSecondary">
-          <span className="text-apple-green font-medium">Easy: {easyCount}</span>
-          <span className="text-apple-orange font-medium">Med: {medCount}</span>
-          <span className="text-apple-red font-medium">Hard: {hardCount}</span>
+      {errorMsg && (
+        <div className="text-[11px] text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2.5 py-1.5 rounded-lg flex items-center justify-between">
+          <span>{errorMsg}</span>
+          <span className="text-[10px] text-neutral-400">Using verified logs</span>
         </div>
-        <div className="flex items-center gap-1 h-2 rounded-full overflow-hidden bg-white/10 p-[1px]">
-          {totalCount === 0 ? (
-            <div className="w-full h-full bg-white/10 rounded-full" />
-          ) : (
-            <>
-              {easyCount > 0 && (
-                <div
-                  className="h-full rounded-full bg-apple-green"
-                  style={{ flex: easyCount }}
-                />
-              )}
-              {medCount > 0 && (
-                <div
-                  className="h-full rounded-full bg-apple-orange"
-                  style={{ flex: medCount }}
-                />
-              )}
-              {hardCount > 0 && (
-                <div
-                  className="h-full rounded-full bg-apple-red"
-                  style={{ flex: hardCount }}
-                />
-              )}
-            </>
-          )}
+      )}
+
+      {/* Metrics Row */}
+      <div className="grid grid-cols-4 gap-2 text-center">
+        <div className="apple-glass-card p-2.5 flex flex-col justify-center">
+          <span className="text-[10px] font-medium text-neutral-400 uppercase tracking-wider">Solved</span>
+          <span className="text-xl font-bold font-mono text-white tabular-nums mt-0.5">
+            {displayTotal}
+          </span>
+          <span className="text-[9px] text-neutral-500 mt-0.5">Problems</span>
+        </div>
+        <div className="apple-glass-card p-2.5 flex flex-col justify-center">
+          <span className="text-[10px] font-medium text-emerald-400 uppercase tracking-wider">Easy</span>
+          <span className="text-xl font-bold font-mono text-emerald-400 tabular-nums mt-0.5">
+            {displayEasy}
+          </span>
+          <span className="text-[9px] text-neutral-500 mt-0.5">Fundamentals</span>
+        </div>
+        <div className="apple-glass-card p-2.5 flex flex-col justify-center">
+          <span className="text-[10px] font-medium text-amber-400 uppercase tracking-wider">Medium</span>
+          <span className="text-xl font-bold font-mono text-amber-400 tabular-nums mt-0.5">
+            {displayMed}
+          </span>
+          <span className="text-[9px] text-neutral-500 mt-0.5">Core DP/Graphs</span>
+        </div>
+        <div className="apple-glass-card p-2.5 flex flex-col justify-center">
+          <span className="text-[10px] font-medium text-red-400 uppercase tracking-wider">Hard</span>
+          <span className="text-xl font-bold font-mono text-red-400 tabular-nums mt-0.5">
+            {displayHard}
+          </span>
+          <span className="text-[9px] text-neutral-500 mt-0.5">Competitive</span>
         </div>
       </div>
 
-      {/* Real Problems Solved Feed */}
-      <div className="flex flex-col gap-1.5 mt-0.5">
-        {lcProblems.length === 0 ? (
-          <div className="apple-glass-card p-4 text-center text-apple-labelTertiary text-xs flex flex-col items-center gap-1.5">
-            <span className="material-symbols-outlined text-[20px] text-apple-labelTertiary">
-              code
-            </span>
-            <span>No LeetCode problems logged yet. Click &quot;Log Problem&quot; to add your real solutions.</span>
+      {/* Recent Solves List */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+            Verified Log History ({leetcodeProblems.length})
+          </span>
+        </div>
+
+        {leetcodeProblems.length === 0 ? (
+          <div className="p-4 rounded-xl bg-white/[0.02] border border-dashed border-white/10 text-center">
+            <p className="text-xs text-neutral-400">No problems logged in your vault yet.</p>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="text-apple-blue hover:underline text-xs mt-1 font-medium inline-block"
+            >
+              Log your first solved problem
+            </button>
           </div>
         ) : (
-          lcProblems.slice(0, 5).map((prob) => {
-            const isHard = prob.difficulty.toLowerCase() === "hard";
-            const isMed = prob.difficulty.toLowerCase() === "medium";
-
-            return (
+          <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
+            {leetcodeProblems.slice(0, 5).map((p) => (
               <div
-                key={prob.id}
-                className="apple-glass-card p-2.5 flex items-center justify-between gap-2"
+                key={p.id}
+                className="apple-glass-card p-2 flex items-center justify-between text-xs hover:border-white/20 transition-colors"
               >
-                <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
                   <span
-                    className={`px-1.5 py-0.5 rounded font-mono text-[9px] font-bold flex-shrink-0 ${
-                      isHard
-                        ? "bg-apple-red/15 text-apple-red"
-                        : isMed
-                        ? "bg-apple-orange/15 text-apple-orange"
-                        : "bg-apple-green/15 text-apple-green"
+                    className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                      p.difficulty === "Hard"
+                        ? "text-red-400 bg-red-400/10"
+                        : p.difficulty === "Medium"
+                        ? "text-amber-400 bg-amber-400/10"
+                        : "text-emerald-400 bg-emerald-400/10"
                     }`}
                   >
-                    {prob.difficulty.toUpperCase()}
+                    #{p.problemId}
                   </span>
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-white truncate">
-                      {prob.problemId ? `${prob.problemId}. ` : ""}
-                      {prob.title}
-                    </p>
-                    <span className="text-[10px] text-apple-labelSecondary font-mono truncate block">
-                      {prob.topicTags.join(" • ") || prob.language} • {prob.dateSolved}
-                    </span>
-                  </div>
+                  <span className="text-white truncate font-medium">{p.title}</span>
                 </div>
-                {onDeleteProblem && (
-                  <button
-                    onClick={() => onDeleteProblem(prob.id)}
-                    className="text-apple-labelTertiary hover:text-apple-red p-1"
-                  >
-                    <span className="material-symbols-outlined text-[15px]">delete</span>
-                  </button>
-                )}
+                <div className="flex items-center gap-2 shrink-0 font-mono text-[10px] text-neutral-400">
+                  <span>{p.dateSolved}</span>
+                  {p.url && (
+                    <a
+                      href={p.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-neutral-400 hover:text-white"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                </div>
               </div>
-            );
-          })
+            ))}
+          </div>
         )}
       </div>
 
-      {/* Add Problem Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <form
-            onSubmit={handleSave}
-            className="apple-glass-panel p-5 max-w-sm w-full flex flex-col gap-3.5 border-apple-blue/50"
-          >
-            <div className="flex items-center justify-between border-b border-white/10 pb-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-white">
-                Log LeetCode Solution
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowAddModal(false)}
-                className="text-apple-labelSecondary hover:text-white text-sm"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              <div className="col-span-1">
-                <label className="text-[10px] text-apple-labelSecondary uppercase block mb-1">
-                  Problem #
-                </label>
-                <input
-                  type="text"
-                  placeholder="295"
-                  value={problemNumber}
-                  onChange={(e) => setProblemNumber(e.target.value)}
-                  className="w-full bg-white/[0.08] border border-white/15 rounded-xl px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-apple-blue"
-                />
+      {/* Manual Problem Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="apple-glass-panel max-w-md w-full p-5 border border-white/20 shadow-2xl">
+            <h3 className="text-base font-bold text-white mb-3 flex items-center gap-2">
+              <Award className="w-4 h-4 text-apple-blue" />
+              Log Solved LeetCode Problem
+            </h3>
+            <form onSubmit={handleCreateSolve} className="flex flex-col gap-3">
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="text-[10px] uppercase text-neutral-400 block mb-1">Problem #</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 295"
+                    value={formNumber}
+                    onChange={(e) => setFormNumber(e.target.value)}
+                    className="w-full bg-white/[0.06] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono outline-none focus:border-apple-blue"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="text-[10px] uppercase text-neutral-400 block mb-1">Title</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Find Median from Data Stream"
+                    value={formTitle}
+                    onChange={(e) => setFormTitle(e.target.value)}
+                    required
+                    className="w-full bg-white/[0.06] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:border-apple-blue"
+                  />
+                </div>
               </div>
-              <div className="col-span-2">
-                <label className="text-[10px] text-apple-labelSecondary uppercase block mb-1">
-                  Problem Title
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Find Median from Data Stream"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-white/[0.08] border border-white/15 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-apple-blue"
-                />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] uppercase text-neutral-400 block mb-1">Difficulty</label>
+                  <select
+                    value={formDifficulty}
+                    onChange={(e) => setFormDifficulty(e.target.value as any)}
+                    className="w-full bg-neutral-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:border-apple-blue"
+                  >
+                    <option value="Easy">Easy (+50 XP)</option>
+                    <option value="Medium">Medium (+100 XP)</option>
+                    <option value="Hard">Hard (+150 XP)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase text-neutral-400 block mb-1">Tags (comma separated)</label>
+                  <input
+                    type="text"
+                    placeholder="Heap, Two Pointers"
+                    value={formTags}
+                    onChange={(e) => setFormTags(e.target.value)}
+                    className="w-full bg-white/[0.06] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:border-apple-blue"
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="text-[10px] text-apple-labelSecondary uppercase block mb-1">
-                  Difficulty
-                </label>
-                <select
-                  value={difficulty}
-                  onChange={(e) => setDifficulty(e.target.value as any)}
-                  className="w-full bg-white/[0.08] border border-white/15 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none"
+                <label className="text-[10px] uppercase text-neutral-400 block mb-1">Key Takeaway / Invariant</label>
+                <textarea
+                  placeholder="e.g. Balanced max-heap on lower half, min-heap on upper half."
+                  value={formNotes}
+                  onChange={(e) => setFormNotes(e.target.value)}
+                  rows={2}
+                  className="w-full bg-white/[0.06] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:border-apple-blue"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-3 py-1.5 rounded-lg text-xs text-neutral-400 hover:text-white"
                 >
-                  <option value="Easy" className="bg-black">Easy</option>
-                  <option value="Medium" className="bg-black">Medium</option>
-                  <option value="Hard" className="bg-black">Hard</option>
-                </select>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-lg bg-apple-blue text-white text-xs font-semibold hover:bg-blue-600 transition-colors"
+                >
+                  Record Solve (+XP)
+                </button>
               </div>
-              <div>
-                <label className="text-[10px] text-apple-labelSecondary uppercase block mb-1">
-                  Language
-                </label>
-                <input
-                  type="text"
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  className="w-full bg-white/[0.08] border border-white/15 rounded-xl px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-[10px] text-apple-labelSecondary uppercase block mb-1">
-                Topic Tags (comma-separated)
-              </label>
-              <input
-                type="text"
-                placeholder="Heaps, Two Pointers, Binary Search"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                className="w-full bg-white/[0.08] border border-white/15 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] text-apple-labelSecondary uppercase block mb-1">
-                Approach Notes
-              </label>
-              <textarea
-                rows={2}
-                placeholder="Max-heap for lower half, min-heap for upper half..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="w-full bg-white/[0.08] border border-white/15 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none leading-relaxed"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-2.5 rounded-xl bg-apple-green text-black font-semibold text-xs apple-spring-press shadow-sm"
-            >
-              Save Problem Record (+100 XP)
-            </button>
-          </form>
+            </form>
+          </div>
         </div>
       )}
-    </section>
+    </div>
   );
 }

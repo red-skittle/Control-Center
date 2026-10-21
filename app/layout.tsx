@@ -1,9 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { AuthProvider } from "../lib/auth/auth-context";
 
 export const metadata: Metadata = {
   title: "Control Center | Personal Telemetry & Executive Dashboard",
   description: "Apple-inspired personal productivity, fitness, focus, and engineering telemetry center.",
+  openGraph: {
+    title: "Control Center | Personal Telemetry & Executive Dashboard",
+    description: "Apple-inspired personal productivity, fitness, focus, and engineering telemetry center.",
+  },
 };
 
 export const viewport: Viewport = {
@@ -35,7 +40,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-black text-white min-h-screen flex flex-col selection:bg-apple-blue selection:text-white antialiased">
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
